@@ -1,0 +1,5 @@
+exec {
+	const nickel := 5.
+	const bool s := _true_.
+	print nickel, _n_, _n_,s;.
+}
