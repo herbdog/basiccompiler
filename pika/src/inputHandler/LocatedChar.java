@@ -59,4 +59,8 @@ public class LocatedChar {
 	public boolean isWhitespace() {
 		return Character.isWhitespace(character);
 	}
+	
+	public boolean isUpperCase() {
+		return Character.isUpperCase(character);
+	}
 }

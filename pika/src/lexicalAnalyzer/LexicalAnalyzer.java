@@ -43,7 +43,7 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 		else if(ch.isDigit()) {
 			return scanNumber(ch);
 		}
-		else if(ch.isLowerCase()) {
+		else if(ch.isLowerCase() || ch.isUpperCase()) {
 			return scanIdentifier(ch);
 		}
 		else if(isPunctuatorStart(ch)) {
@@ -53,7 +53,7 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 			return NullToken.make(ch.getLocation());
 		}
 		else {
-			lexicalError(ch);
+			lexicalError(ch, "findnexttoken");
 			return findNextToken();
 		}
 	}
@@ -95,6 +95,9 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append(firstChar.getCharacter());
 		appendSubsequentLowercase(buffer);
+		if (buffer.length() > 32) {
+			lexicalError(firstChar,"identifier");
+		}
 
 		String lexeme = buffer.toString();
 		if(Keyword.isAKeyword(lexeme)) {
@@ -106,7 +109,7 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 	}
 	private void appendSubsequentLowercase(StringBuffer buffer) {
 		LocatedChar c = input.next();
-		while(c.isLowerCase()) {
+		while(c.isLowerCase() || c.isDigit() || c.isUpperCase()) {
 			buffer.append(c.getCharacter());
 			c = input.next();
 		}
@@ -164,22 +167,29 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 	//////////////////////////////////////////////////////////////////////////////
 	// Error-reporting	
 
-	private void lexicalError(LocatedChar ch) {
+	private void lexicalError(LocatedChar ch, String string) {
 		PikaLogger log = PikaLogger.getLogger("compiler.lexicalAnalyzer");
-		log.severe("Lexical error: invalid character " + ch);
+		if (string.equals("identifier")) {
+			log.severe("Lexical error: identifier length cannot exceed 32 " + ch);
+		}
+		else {
+			log.severe("Lexical error: invalid character " + ch);
+		}
 	}
 	
 	//dealing with comments
 	private Token comments(LocatedChar ch) {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append(ch.getCharacter());
+		appendcomment(buffer);
+		return CommentToken.make(ch.getLocation(), buffer.toString());
+	}
+
+	private void appendcomment(StringBuffer buffer) {
 		LocatedChar c = input.next();
 		while (!c.isChar('#') && !c.isChar('\n')) {
 			buffer.append(c.getCharacter());
 			c = input.next();
 		}
-		return CommentToken.make(ch.getLocation(), buffer.toString());
 	}
-
-	
 }
