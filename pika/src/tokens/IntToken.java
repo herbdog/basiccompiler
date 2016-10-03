@@ -11,6 +11,7 @@ public class IntToken extends TokenImp {
 	protected void setValue(int value) {
 		this.value = value;
 	}
+	
 	public int getValue() {
 		return value;
 	}

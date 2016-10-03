@@ -2,7 +2,7 @@ package parseTree.nodeTypes;
 
 import parseTree.ParseNode;
 import parseTree.ParseNodeVisitor;
-import tokens.NumberToken;
+import tokens.IntToken;
 import tokens.Token;
 
 public class IntegerConstantNode extends ParseNode {
@@ -16,12 +16,11 @@ public class IntegerConstantNode extends ParseNode {
 
 ////////////////////////////////////////////////////////////
 // attributes
-	
 	public int getValue() {
-		return numberToken().getValue();
+		return IntToken().getValue();
 	}
-
-	public IntToken numberToken() {
+	
+	public IntToken IntToken() {
 		return (IntToken)token;
 	}	
 
