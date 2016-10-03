@@ -267,7 +267,26 @@ public class Parser {
 	}
 	private boolean startsAdditiveExpression(Token token) {
 		return startsLiteral(token);
-	}	
+	}
+	
+	// subtractivenExpression
+	private ParseNode parseSubtractiveExpression() {
+		if (!startsSubtractiveExpression(nowReading)) {
+			return syntaxErrorNode("subtractiveExpression");
+		}
+		ParseNode left = parseMultiplicativeExpression();
+		while(nowReading.isLextant(Punctuator.SUBTRACT)) {
+			Token subtractiveToken = nowReading;
+			readToken();
+			ParseNode right = parseMultiplicativeExpression();
+			
+			left = BinaryOperatorNode.withChildren(subtractiveToken, left, right);
+		}
+		return left;
+	}
+	private boolean startsSubtractiveExpression(Token token) {
+		return startsLiteral(token);
+	}
 
 	// multiplicativeExpression -> atomicExpression [MULT atomicExpression]*  (left-assoc)
 	private ParseNode parseMultiplicativeExpression() {

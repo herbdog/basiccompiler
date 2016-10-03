@@ -1,8 +1,7 @@
 package lexicalAnalyzer;
 
 import inputHandler.PushbackCharStream;
-import tokens.NullToken;
-import tokens.Token;
+import tokens.*;
 
 public abstract class ScannerImp implements Scanner {
 	private Token nextToken;
@@ -27,6 +26,14 @@ public abstract class ScannerImp implements Scanner {
 		Token result = nextToken;
 		nextToken = findNextToken();
 		return result;
+	}
+	
+	public boolean isLiteral() {
+		Token result = nextToken;
+		if ((result instanceof IdentifierToken) || (result instanceof NumberToken)) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override

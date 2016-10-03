@@ -39,7 +39,6 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 		if (ch.isChar('#')) {
 			return comments(ch);
 		}
-		
 		else if(ch.isDigit()) {
 			return scanNumber(ch);
 		}
@@ -47,6 +46,9 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 			return scanIdentifier(ch);
 		}
 		else if(isPunctuatorStart(ch)) {
+			if (((ch.getCharacter() == '+') || (ch.getCharacter() == '-')) && (!isLiteral())) {
+				return scanNumber(ch);
+			}
 			return PunctuatorScanner.scan(ch, input);
 		}
 		else if(isEndOfInput(ch)) {

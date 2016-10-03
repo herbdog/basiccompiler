@@ -6,6 +6,7 @@ import semanticAnalyzer.types.PrimitiveType;
 import semanticAnalyzer.types.Type;
 import lexicalAnalyzer.Lextant;
 import lexicalAnalyzer.Punctuator;
+import semanticAnalyzer.signatures.FunctionSignatures;
 
 //immutable
 public class FunctionSignature {
@@ -85,18 +86,17 @@ public class FunctionSignature {
 	// Signatures for pika-0 operators
 	// this section will probably disappear in pika-1 (in favor of FunctionSignatures)
 	
-	private static FunctionSignature addSignature = new FunctionSignature(1, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.INTEGER);
 	private static FunctionSignature multiplySignature = new FunctionSignature(1, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.INTEGER);
 	private static FunctionSignature greaterSignature = new FunctionSignature(1, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.BOOLEAN);
 
 	
 	// the switch here is ugly compared to polymorphism.  This should perhaps be a method on Lextant.
-	public static FunctionSignature signatureOf(Lextant lextant) {
+	public static FunctionSignature signatureOf(Lextant lextant, List<Type> paramTypes) {
 		assert(lextant instanceof Punctuator);	
 		Punctuator punctuator = (Punctuator)lextant;
 		
 		switch(punctuator) {
-		case ADD:		return addSignature;
+		case ADD:		return FunctionSignatures.signaturesOf(Punctuator.ADD).acceptingSignature(paramTypes);
 		case MULTIPLY:	return multiplySignature;
 		case GREATER:	return greaterSignature;
 

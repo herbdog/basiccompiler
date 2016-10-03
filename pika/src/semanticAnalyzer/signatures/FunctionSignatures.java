@@ -5,8 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import semanticAnalyzer.types.Type;
-
+import semanticAnalyzer.types.*;
+import lexicalAnalyzer.Punctuator;
+import asmCodeGenerator.codeStorage.ASMOpcode;
 
 public class FunctionSignatures extends ArrayList<FunctionSignature> {
 	private static final long serialVersionUID = -4907792488209670697L;
@@ -67,10 +68,9 @@ public class FunctionSignatures extends ArrayList<FunctionSignature> {
 		// here's one example to get you started with FunctionSignatures: the signatures for addition.		
 		// for this to work, you should statically import PrimitiveType.*
 
-//		new FunctionSignatures(Punctuator.ADD,
-//		    new FunctionSignature(ASMOpcode.Add, INTEGER, INTEGER, INTEGER),
-//		    new FunctionSignature(ASMOpcode.FAdd, FLOAT, FLOAT, FLOAT)
-//		);
+		new FunctionSignatures(Punctuator.ADD,
+		    new FunctionSignature(ASMOpcode.Add, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.INTEGER)
+		);
 		
 		// First, we use the operator itself (in this case the Punctuator ADD) as the key.
 		// Then, we give that key two signatures: one an (INT x INT -> INT) and the other
@@ -90,6 +90,7 @@ public class FunctionSignatures extends ArrayList<FunctionSignature> {
 		// I will not use an ASMOpcode for the whichVariant.  In these cases I typically use
 		// a small object with one method (the "Command" design pattern) that generates the
 		// required code.
+		
 
 	}
 
