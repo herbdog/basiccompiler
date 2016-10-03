@@ -45,11 +45,14 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 			}
 			return PunctuatorScanner.scan(ch, input);
 		}
+		else if(ch.isChar('"')) {
+			return scanString(ch);
+		}
 		else if(isEndOfInput(ch)) {
 			return NullToken.make(ch.getLocation());
 		}
 		else {
-			lexicalError(ch, "findnexttoken");
+			lexicalError(ch, "invalid char");
 			return findNextToken();
 		}
 	}
@@ -72,11 +75,51 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 		buffer.append(firstChar.getCharacter());
 		appendSubsequentDigits(buffer);
 		
+		if ((buffer.toString().contains(".")) || (buffer.toString().contains("E"))) {
+			return FloatToken.make(firstChar.getLocation(), buffer.toString());
+		}
 		return IntToken.make(firstChar.getLocation(), buffer.toString());
 	}
 	private void appendSubsequentDigits(StringBuffer buffer) {
 		LocatedChar c = input.next();
 		while(c.isDigit()) {
+			buffer.append(c.getCharacter());
+			c = input.next();
+		}
+		if (c.isChar('.')) {
+			LocatedChar cnext = input.peek();
+			if (cnext.isDigit()) {
+				buffer.append(c.getCharacter());
+				c = input.next();
+			}
+		}
+		while (c.isDigit()) {
+			buffer.append(c.getCharacter());
+			c = input.next();
+		}
+		if (c.isChar('E')) {
+			LocatedChar cnext = input.peek();
+			if ((cnext.isChar('+')) || (cnext.isChar('-'))) {
+				buffer.append(c.getCharacter());
+				c = input.next();
+				cnext = input.peek();
+				if (cnext.isDigit()) {
+					buffer.append(c.getCharacter());
+					c = input.next();
+				}
+				else {
+					lexicalError(c, "invalid char");
+				}
+			}
+			else if (cnext.isDigit()) {
+				buffer.append(c.getCharacter());
+				c = input.next();
+			}
+			else {
+				lexicalError(c, "invalid char");
+			}
+		}
+		while (c.isDigit()) {
 			buffer.append(c.getCharacter());
 			c = input.next();
 		}
@@ -184,6 +227,25 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 	private void appendcomment(StringBuffer buffer) {
 		LocatedChar c = input.next();
 		while (!c.isChar('#') && !c.isChar('\n')) {
+			buffer.append(c.getCharacter());
+			c = input.next();
+		}
+	}
+	
+	//dealing with string constants;
+	private Token scanString(LocatedChar ch) {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(ch.getCharacter());
+		appendString(buffer);
+		return StringToken.make(ch.getLocation(), buffer.toString());
+	}
+	
+	private void appendString(StringBuffer buffer) {
+		LocatedChar c = input.next();
+		if (c.isChar('\n')) {
+			lexicalError(c, "invalid character");
+		}
+		while (!c.isChar('"')) {
 			buffer.append(c.getCharacter());
 			c = input.next();
 		}

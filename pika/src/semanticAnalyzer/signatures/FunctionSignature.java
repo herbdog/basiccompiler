@@ -91,12 +91,12 @@ public class FunctionSignature {
 
 	
 	// the switch here is ugly compared to polymorphism.  This should perhaps be a method on Lextant.
-	public static FunctionSignature signatureOf(Lextant lextant, List<Type> paramTypes) {
+	public static FunctionSignature signatureOf(Lextant lextant, List<Type> Typelist) {
 		assert(lextant instanceof Punctuator);	
 		Punctuator punctuator = (Punctuator)lextant;
 		
 		switch(punctuator) {
-		case ADD:		return FunctionSignatures.signaturesOf(Punctuator.ADD).acceptingSignature(paramTypes);
+		case ADD:		return FunctionSignatures.signaturesOf(Punctuator.ADD).acceptingSignature(Typelist);
 		case MULTIPLY:	return multiplySignature;
 		case GREATER:	return greaterSignature;
 

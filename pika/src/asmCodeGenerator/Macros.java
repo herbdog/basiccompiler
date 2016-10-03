@@ -32,7 +32,6 @@ public class Macros {
 		frag.add(DLabel, variableName);
 		frag.add(DataZ, 4);
 	}
-	
 	/** [... baseLocation] -> [... intValue]
 	 * @param frag ASMCodeFragment to add code to
 	 * @param offset amount to add to the base location before reading
