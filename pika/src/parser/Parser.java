@@ -361,6 +361,9 @@ public class Parser {
 	private void readToken() {
 		previouslyRead = nowReading;
 		nowReading = scanner.next();
+		while (nowReading.getClass() == CommentToken.class) {
+			nowReading = scanner.next();
+		}
 	}	
 	
 	// if the current token is one of the given lextants, read the next token.
