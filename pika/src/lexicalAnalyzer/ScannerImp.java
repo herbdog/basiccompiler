@@ -30,7 +30,7 @@ public abstract class ScannerImp implements Scanner {
 	
 	public boolean isLiteral() {
 		Token result = nextToken;
-		if ((result instanceof IdentifierToken) || (result instanceof NumberToken)) {
+		if ((result instanceof IdentifierToken) || (result instanceof IntToken)) {
 			return true;
 		}
 		return false;

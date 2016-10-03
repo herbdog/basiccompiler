@@ -350,7 +350,7 @@ public class Parser {
 		return new IntegerConstantNode(previouslyRead);
 	}
 	private boolean startsIntNumber(Token token) {
-		return token instanceof NumberToken;
+		return token instanceof IntToken;
 	}
 
 	// identifier (terminal)
