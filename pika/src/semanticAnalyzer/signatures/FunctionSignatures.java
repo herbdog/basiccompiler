@@ -69,7 +69,8 @@ public class FunctionSignatures extends ArrayList<FunctionSignature> {
 		// for this to work, you should statically import PrimitiveType.*
 
 		new FunctionSignatures(Punctuator.ADD,
-		    new FunctionSignature(ASMOpcode.Add, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.INTEGER)
+		    new FunctionSignature(ASMOpcode.Add, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.INTEGER),
+		    new FunctionSignature(ASMOpcode.FAdd, PrimitiveType.FLOAT, PrimitiveType.FLOAT, PrimitiveType.FLOAT)
 		);
 		
 		// First, we use the operator itself (in this case the Punctuator ADD) as the key.

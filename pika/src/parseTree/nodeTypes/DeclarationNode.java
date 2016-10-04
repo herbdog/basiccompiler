@@ -33,7 +33,7 @@ public class DeclarationNode extends ParseNode {
 	////////////////////////////////////////////////////////////
 	// convenience factory
 	
-	public static DeclarationNode withChildren(Token token, ParseNode declaredName, ParseNode initializer) {
+	public static DeclarationNode withChildren(Token token, ParseNode declaredName,ParseNode initializer) {
 		DeclarationNode node = new DeclarationNode(token);
 		node.appendChild(declaredName);
 		node.appendChild(initializer);

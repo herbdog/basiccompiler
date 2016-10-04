@@ -44,19 +44,20 @@ public class PrintStatementGenerator {
 		CharSequence identifier = "IdentifierNode";
 		CharSequence isstring = "STRING";
 		CharSequence variablename = node.getToken().getLexeme();
-		System.out.print(node.getType());
 		if (node.getType() == PrimitiveType.STRING) {
 			if ((node.toString().contains(identifier) && (node.toString().contains(isstring)))) { //printing via identifier
 				ParseNode globalnode = node;
 				while (!globalnode.hasScope()) {
 					globalnode = globalnode.getParent();
-					int i = 0;
-					ParseNode localnode = globalnode.child(i);
-					if ((localnode.getLocalScope() == node.getLocalScope()) && (localnode.toString().contains(Decnode) && (localnode.toString().contains(identifier) && (localnode.toString().contains(isstring)) && (localnode.toString().contains(variablename))))) {
-						if (localnode.child(0).getChildren().isEmpty()) { //lowest level of declaration node
-							format = localnode.child(1).getToken().getLexeme().replace("\"","");
-							break;
-						}
+					for (int i = 0; i < globalnode.getChildren().size(); i++) {
+						ParseNode localnode = globalnode.child(i);
+						if ((localnode.getLocalScope() == node.getLocalScope()) && (localnode.toString().contains(Decnode) && (localnode.toString().contains(identifier) && (localnode.toString().contains(isstring)) && (localnode.toString().contains(variablename))))) {
+							System.out.print(localnode);
+							if (localnode.child(0).getChildren().isEmpty()) { //lowest level of declaration node
+								format = localnode.child(1).getToken().getLexeme().replace("\"","");
+								break;
+							}
+						}	
 					}
 				}
 			}

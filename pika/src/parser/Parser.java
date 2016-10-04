@@ -99,7 +99,6 @@ public class Parser {
 		return startsPrintStatement(token) ||
 			   startsDeclaration(token);
 	}
-	
 	// printStmt -> PRINT printExpressionList .
 	private ParseNode parsePrintStatement() {
 		if(!startsPrintStatement(nowReading)) {
@@ -196,7 +195,7 @@ public class Parser {
 		return token.isLextant(Keyword.CONST);
 	}
 
-
+	// starting keywords for types
 	
 	///////////////////////////////////////////////////////////
 	// expressions
@@ -440,5 +439,6 @@ public class Parser {
 		PikaLogger log = PikaLogger.getLogger("compiler.Parser");
 		log.severe("syntax error: " + message);
 	}	
+	
 }
 
