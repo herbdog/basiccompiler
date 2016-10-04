@@ -292,8 +292,21 @@ public class ASMCodeGenerator {
 				return Add;	
 			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT))
 				return FAdd;
-			case MULTIPLY: 		return Multiply;		// type-dependent!
-			case SUBTRACT:		return Subtract;
+			case SUBTRACT:
+			if ((arg1 == PrimitiveType.INTEGER) && (arg2 == PrimitiveType.INTEGER))
+				return Subtract;	
+			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT))
+				return FSubtract;
+			case MULTIPLY: 
+			if ((arg1 == PrimitiveType.INTEGER) && (arg2 == PrimitiveType.INTEGER))
+				return Multiply;	
+			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT))
+				return FMultiply;
+			case DIVIDE: 
+			if ((arg1 == PrimitiveType.INTEGER) && (arg2 == PrimitiveType.INTEGER))
+				return Divide;	
+			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT))
+				return FDivide;
 			default:
 				assert false : "unimplemented operator in opcodeForOperator";
 			}

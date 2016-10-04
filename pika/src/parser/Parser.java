@@ -252,19 +252,7 @@ public class Parser {
 			
 			left = BinaryOperatorNode.withChildren(additiveToken, left, right);
 		}
-		return left;
-	}
-	private boolean startsAdditiveExpression(Token token) {
-		return startsMultiplicativeExpression(token);
-	}
-	
-	// subtractivenExpression
-	private ParseNode parseSubtractiveExpression() {
-		if (!startsSubtractiveExpression(nowReading)) {
-			return syntaxErrorNode("subtractiveExpression");
-		}
-		ParseNode left = parseMultiplicativeExpression();
-		while(nowReading.isLextant(Punctuator.SUBTRACT)) {
+		while (nowReading.isLextant(Punctuator.SUBTRACT)) {
 			Token subtractiveToken = nowReading;
 			readToken();
 			ParseNode right = parseMultiplicativeExpression();
@@ -273,8 +261,8 @@ public class Parser {
 		}
 		return left;
 	}
-	private boolean startsSubtractiveExpression(Token token) {
-		return startsLiteral(token);
+	private boolean startsAdditiveExpression(Token token) {
+		return startsMultiplicativeExpression(token);
 	}
 
 	// multiplicativeExpression -> atomicExpression [MULT atomicExpression]*  (left-assoc)
@@ -290,6 +278,13 @@ public class Parser {
 			ParseNode right = parseAtomicExpression();
 			
 			left = BinaryOperatorNode.withChildren(multiplicativeToken, left, right);
+		}
+		while(nowReading.isLextant(Punctuator.DIVIDE)) {
+			Token divisiveToken = nowReading;
+			readToken();
+			ParseNode right = parseAtomicExpression();
+			
+			left = BinaryOperatorNode.withChildren(divisiveToken, left, right);
 		}
 		return left;
 	}

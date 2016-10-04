@@ -86,7 +86,6 @@ public class FunctionSignature {
 	// Signatures for pika-0 operators
 	// this section will probably disappear in pika-1 (in favor of FunctionSignatures)
 	
-	private static FunctionSignature multiplySignature = new FunctionSignature(1, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.INTEGER);
 	private static FunctionSignature greaterSignature = new FunctionSignature(1, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.BOOLEAN);
 
 	
@@ -97,7 +96,9 @@ public class FunctionSignature {
 		
 		switch(punctuator) {
 		case ADD:		return FunctionSignatures.signaturesOf(Punctuator.ADD).acceptingSignature(TypeList);
-		case MULTIPLY:	return multiplySignature;
+		case SUBTRACT:	return FunctionSignatures.signaturesOf(Punctuator.SUBTRACT).acceptingSignature(TypeList);
+		case MULTIPLY:	return FunctionSignatures.signaturesOf(Punctuator.MULTIPLY).acceptingSignature(TypeList);
+		case DIVIDE:	return FunctionSignatures.signaturesOf(Punctuator.DIVIDE).acceptingSignature(TypeList);
 		case GREATER:	return greaterSignature;
 
 		default:
