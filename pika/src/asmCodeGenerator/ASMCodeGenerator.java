@@ -136,7 +136,7 @@ public class ASMCodeGenerator {
 				code.add(LoadC);
 			}	
 			else if(node.getType() == PrimitiveType.STRING) {
-				code.add(PushD);
+				code.add(Nop);
 			}
 			else if(node.getType() == PrimitiveType.CHAR) {
 				code.add(LoadC);
@@ -214,7 +214,7 @@ public class ASMCodeGenerator {
 				return StoreC;
 			}
 			if(type == PrimitiveType.STRING) {
-				return DataS;
+				return Nop;
 			}
 			if(type == PrimitiveType.CHAR) {
 				return StoreC;
@@ -318,9 +318,10 @@ public class ASMCodeGenerator {
 			code.add(PushF, node.getValue());
 		}
 		public void visit(StringConstantNode node) {
+			newAddressCode(node);
 			newValueCode(node);
-			
 			code.add(DLabel, node.getValue());
+			code.add(DataS, node.getValue());
 		}
 		public void visit(CharacterConstantNode node) {
 			newValueCode(node);

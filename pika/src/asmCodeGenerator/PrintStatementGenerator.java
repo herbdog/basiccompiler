@@ -39,7 +39,34 @@ public class PrintStatementGenerator {
 	}
 
 	private void appendPrintCode(ParseNode node) {
-		String format = printFormat(node.getType());
+		String format = null;
+		CharSequence Decnode = "DeclarationNode";
+		CharSequence identifier = "IdentifierNode";
+		CharSequence isstring = "STRING";
+		CharSequence variablename = node.getToken().getLexeme();
+		System.out.print(node.getType());
+		if (node.getType() == PrimitiveType.STRING) {
+			if ((node.toString().contains(identifier) && (node.toString().contains(isstring)))) { //printing via identifier
+				ParseNode globalnode = node;
+				while (!globalnode.hasScope()) {
+					globalnode = globalnode.getParent();
+					int i = 0;
+					ParseNode localnode = globalnode.child(i);
+					if ((localnode.getLocalScope() == node.getLocalScope()) && (localnode.toString().contains(Decnode) && (localnode.toString().contains(identifier) && (localnode.toString().contains(isstring)) && (localnode.toString().contains(variablename))))) {
+						if (localnode.child(0).getChildren().isEmpty()) { //lowest level of declaration node
+							format = localnode.child(1).getToken().getLexeme().replace("\"","");
+							break;
+						}
+					}
+				}
+			}
+			else {
+				format = node.getToken().getLexeme().replace("\"","");
+			}
+		}
+		else {
+			format = printFormat(node.getType());
+		}
 
 		code.append(visitor.removeValueCode(node));
 		convertToStringIfBoolean(node);
@@ -69,7 +96,7 @@ public class PrintStatementGenerator {
 		
 		switch((PrimitiveType)type) {
 		case INTEGER:	return RunTime.INTEGER_PRINT_FORMAT;
-		case FLOAT:		return RunTime.FLOAT_PRINT_FORMAT;
+		case FLOAT:		return RunTime.STRING_PRINT_FORMAT;
 		case STRING:	return RunTime.STRING_PRINT_FORMAT;
 		case CHAR:		return RunTime.CHARACTER_PRINT_FORMAT;
 		case BOOLEAN:	return RunTime.BOOLEAN_PRINT_FORMAT;

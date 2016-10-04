@@ -20,7 +20,7 @@ public class StringToken extends TokenImp {
 	}
 	
 	public String getValue() {
-		return value;
+		return value.substring(1, value.length()-1);
 	}
 	
 	@Override
