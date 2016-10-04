@@ -275,18 +275,23 @@ public class ASMCodeGenerator {
 			newValueCode(node);
 			ASMCodeFragment arg1 = removeValueCode(node.child(0));
 			ASMCodeFragment arg2 = removeValueCode(node.child(1));
-			
+			Type arg1type = node.child(0).getType();
+			Type arg2type = node.child(1).getType();
 			code.append(arg1);
 			code.append(arg2);
 			
-			ASMOpcode opcode = opcodeForOperator(node.getOperator());
+			ASMOpcode opcode = opcodeForOperator(node.getOperator(),arg1type,arg2type);
 			code.add(opcode);							// type-dependent! (opcode is different for floats and for ints)
 		}
-		private ASMOpcode opcodeForOperator(Lextant lextant) {
+		private ASMOpcode opcodeForOperator(Lextant lextant, Type arg1, Type arg2) {
 			assert(lextant instanceof Punctuator);
 			Punctuator punctuator = (Punctuator)lextant;
 			switch(punctuator) {
-			case ADD: 	   		return Add;				// type-dependent!
+			case ADD: 	   		
+			if ((arg1 == PrimitiveType.INTEGER) && (arg2 == PrimitiveType.INTEGER))
+				return Add;	
+			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT))
+				return FAdd;
 			case MULTIPLY: 		return Multiply;		// type-dependent!
 			case SUBTRACT:		return Subtract;
 			default:
