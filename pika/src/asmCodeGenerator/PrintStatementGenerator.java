@@ -70,6 +70,8 @@ public class PrintStatementGenerator {
 		switch((PrimitiveType)type) {
 		case INTEGER:	return RunTime.INTEGER_PRINT_FORMAT;
 		case FLOAT:		return RunTime.FLOAT_PRINT_FORMAT;
+		case STRING:	return RunTime.STRING_PRINT_FORMAT;
+		case CHAR:		return RunTime.CHARACTER_PRINT_FORMAT;
 		case BOOLEAN:	return RunTime.BOOLEAN_PRINT_FORMAT;
 		default:		
 			assert false : "Type " + type + " unimplemented in PrintStatementGenerator.printFormat()";

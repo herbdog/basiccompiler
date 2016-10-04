@@ -43,10 +43,16 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 			if (((ch.getCharacter() == '+') || (ch.getCharacter() == '-')) && (!isLiteral())) {
 				return scanNumber(ch);
 			}
+			if ((ch.getCharacter() == '.') && (input.peek().isDigit())) {
+				return scanNumber(ch);
+			}
 			return PunctuatorScanner.scan(ch, input);
 		}
 		else if(ch.isChar('"')) {
 			return scanString(ch);
+		}
+		else if(ch.isChar('^')) {
+			return scanCharacter(ch);
 		}
 		else if(isEndOfInput(ch)) {
 			return NullToken.make(ch.getLocation());
@@ -89,6 +95,9 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 		if (c.isChar('.')) {
 			LocatedChar cnext = input.peek();
 			if (cnext.isDigit()) {
+				if ((buffer.length() <= 1) && ((buffer.toString().equals("+")) || (buffer.toString().equals("-")))) {
+					buffer.append('0');
+				}
 				buffer.append(c.getCharacter());
 				c = input.next();
 			}
@@ -242,12 +251,33 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 	
 	private void appendString(StringBuffer buffer) {
 		LocatedChar c = input.next();
-		if (c.isChar('\n')) {
-			lexicalError(c, "invalid character");
-		}
 		while (!c.isChar('"')) {
 			buffer.append(c.getCharacter());
 			c = input.next();
+			if (c.isChar('\n')) {
+				lexicalError(c, "invalid character");
+			}
+		}
+		buffer.append(c.getCharacter());
+	}
+	
+	//dealing with characters ^a^
+	private Token scanCharacter(LocatedChar ch) {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(ch.getCharacter());
+		appendCharacter(buffer);
+		return CharacterToken.make(ch.getLocation(), buffer.toString());
+	}
+	
+	private void appendCharacter(StringBuffer buffer) {
+		LocatedChar c = input.next();
+		if ((c.getCharacter() < 32) || (c.getCharacter() > 126)) {
+			lexicalError(c, "invalid char");
+		}
+		else {
+			buffer.append(c.getCharacter());
+			c = input.next();
+			buffer.append(c.getCharacter());
 		}
 	}
 }

@@ -135,6 +135,12 @@ public class ASMCodeGenerator {
 			else if(node.getType() == PrimitiveType.BOOLEAN) {
 				code.add(LoadC);
 			}	
+			else if(node.getType() == PrimitiveType.STRING) {
+				code.add(PushD);
+			}
+			else if(node.getType() == PrimitiveType.CHAR) {
+				code.add(LoadC);
+			}
 			else {
 				assert false : "node " + node;
 			}
@@ -189,6 +195,7 @@ public class ASMCodeGenerator {
 			newVoidCode(node);
 			ASMCodeFragment lvalue = removeAddressCode(node.child(0));	
 			ASMCodeFragment rvalue = removeValueCode(node.child(1));
+
 			
 			code.append(lvalue);
 			code.append(rvalue);
@@ -204,6 +211,12 @@ public class ASMCodeGenerator {
 				return StoreF;
 			}
 			if(type == PrimitiveType.BOOLEAN) {
+				return StoreC;
+			}
+			if(type == PrimitiveType.STRING) {
+				return DataS;
+			}
+			if(type == PrimitiveType.CHAR) {
 				return StoreC;
 			}
 			assert false: "Type " + type + " unimplemented in opcodeForStore()";
@@ -303,6 +316,16 @@ public class ASMCodeGenerator {
 			newValueCode(node);
 			
 			code.add(PushF, node.getValue());
+		}
+		public void visit(StringConstantNode node) {
+			newValueCode(node);
+			
+			code.add(DLabel, node.getValue());
+		}
+		public void visit(CharacterConstantNode node) {
+			newValueCode(node);
+			
+			code.add(PushI, node.getValue());
 		}
 	}
 

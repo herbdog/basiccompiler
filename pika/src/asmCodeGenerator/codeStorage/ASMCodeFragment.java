@@ -125,7 +125,7 @@ public class ASMCodeFragment {
 		ASMOpcode opcode = readOpcode(words[0]);
 		
 		if(opcode.takesFloat()) {
-			float d = Float.parseFloat(words[1]);
+			Double d = Double.parseDouble(words[1]);
 			String comment = commentStartingAtIndex(2, words);
 			result.add(opcode, d, comment);
 		}

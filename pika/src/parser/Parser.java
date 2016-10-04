@@ -256,7 +256,7 @@ public class Parser {
 		return left;
 	}
 	private boolean startsAdditiveExpression(Token token) {
-		return startsLiteral(token);
+		return startsMultiplicativeExpression(token);
 	}
 	
 	// subtractivenExpression
@@ -327,11 +327,17 @@ public class Parser {
 		if(startsBooleanConstant(nowReading)) {
 			return parseBooleanConstant();
 		}
+		if(startsStringConstant(nowReading)) {
+			return parseStringConstant();
+		}
+		if(startsCharacterConstant(nowReading)) {
+			return parseCharacterConstant();
+		}
 
 		return syntaxErrorNode("literal");
 	}
 	private boolean startsLiteral(Token token) {
-		return startsIntNumber(token) || startsIdentifier(token) || startsBooleanConstant(token) || startsFloatNumber(token);
+		return startsIntNumber(token) || startsIdentifier(token) || startsBooleanConstant(token) || startsFloatNumber(token) || startsStringConstant(token) || startsCharacterConstant(token);
 	}
 
 	// number (terminal)
@@ -381,6 +387,18 @@ public class Parser {
 	private boolean startsBooleanConstant(Token token) {
 		return token.isLextant(Keyword.TRUE, Keyword.FALSE);
 	}
+	
+	//string constants
+	private ParseNode parseStringConstant() {
+		if (!startsStringConstant(nowReading)) {
+			return syntaxErrorNode("string constant");
+		}
+		readToken();
+		return new StringConstantNode(previouslyRead);
+	}
+	private boolean startsStringConstant(Token token) {
+		return token instanceof StringToken;
+	}
 
 	private void readToken() {
 		previouslyRead = nowReading;
@@ -389,7 +407,17 @@ public class Parser {
 			nowReading = scanner.next();
 		}
 	}	
-	
+	//character constant
+	private ParseNode parseCharacterConstant() {
+		if (!startsCharacterConstant(nowReading)) {
+			return syntaxErrorNode("character constant");
+		}
+		readToken();
+		return new CharacterConstantNode(previouslyRead);
+	}
+	private boolean startsCharacterConstant(Token token) {
+		return token instanceof CharacterToken;
+	}
 	// if the current token is one of the given lextants, read the next token.
 	// otherwise, give a syntax error and read next token (to avoid endless looping).
 	private void expect(Lextant ...lextants ) {
