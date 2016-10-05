@@ -32,8 +32,16 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		leaveScope(node);
 	}
 	public void visitEnter(MainBlockNode node) {
+		enterSubscope(node);
 	}
 	public void visitLeave(MainBlockNode node) {
+		leaveScope(node);
+	}
+	public void visitEnter(BlockNode node) {
+		enterSubscope(node);
+	}
+	public void visitLeave(BlockNode node) {
+		leaveScope(node);
 	}
 	
 	
@@ -43,7 +51,6 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		Scope scope = Scope.createProgramScope();
 		node.setScope(scope);
 	}	
-	@SuppressWarnings("unused")
 	private void enterSubscope(ParseNode node) {
 		Scope baseScope = node.getLocalScope();
 		Scope scope = baseScope.createSubscope();

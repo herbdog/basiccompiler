@@ -47,15 +47,16 @@ public class PrintStatementGenerator {
 		CharSequence variablename = node.getToken().getLexeme();
 		if (node.getType() == PrimitiveType.STRING) {
 			if ((node.toString().contains(identifier) && (node.toString().contains(isstring)))) { //printing via identifier
-				ParseNode globalnode = node;
-				while (!globalnode.hasScope()) {
+				ParseNode globalnode = node.getParent();
+				pathtoroot:
+				while (!globalnode.containsBindingOf("ProgramNode (EXEC)")) {
 					globalnode = globalnode.getParent();
 					for (int i = 0; i < globalnode.getChildren().size(); i++) {
 						ParseNode localnode = globalnode.child(i);
-						if ((localnode.getLocalScope() == node.getLocalScope()) && (localnode.toString().contains(Decnode) && (localnode.toString().contains(identifier) && (localnode.toString().contains(isstring)) && (localnode.toString().contains(variablename))))) {
+						if ((localnode.getScope() == node.getScope()) && (localnode.toString().contains(Decnode)) && (localnode.toString().contains(identifier)) && (localnode.toString().contains(isstring)) && (localnode.toString().contains(variablename))) {
 							if (localnode.child(0).getChildren().isEmpty()) { //lowest level of declaration node
 								format = localnode.child(1).getToken().getLexeme().replace("\"","");
-								break;
+								break pathtoroot;
 							}
 						}	
 					}

@@ -10,6 +10,7 @@ import lexicalAnalyzer.Keyword;
 import lexicalAnalyzer.Lextant;
 import lexicalAnalyzer.Punctuator;
 import lexicalAnalyzer.Scanner;
+import symbolTable.*;
 
 
 public class Parser {
@@ -77,13 +78,33 @@ public class Parser {
 	private boolean startsMainBlock(Token token) {
 		return token.isLextant(Punctuator.OPEN_BRACE);
 	}
-	
+	// inner block statements
+	private ParseNode parseBlock() {
+		if (!startsBlock(nowReading)) {
+			return syntaxErrorNode("mainBlock");
+		}
+		ParseNode Block = new BlockNode(nowReading);
+		expect(Punctuator.OPEN_BRACE);
+		
+		while(startsStatement(nowReading)) {
+			ParseNode statement = parseStatement();
+			Block.appendChild(statement);
+		}
+		expect(Punctuator.CLOSE_BRACE);
+		return Block;
+	}
+	private boolean startsBlock(Token token) {
+		return token.isLextant(Punctuator.OPEN_BRACE);
+	}
 	
 	///////////////////////////////////////////////////////////
 	// statements
 	
 	// statement-> declaration | printStmt
 	private ParseNode parseStatement() {
+		if(nowReading.isLextant(Punctuator.OPEN_BRACE)) {
+			return parseBlock();
+		}
 		if(!startsStatement(nowReading)) {
 			return syntaxErrorNode("statement");
 		}
@@ -97,7 +118,7 @@ public class Parser {
 	}
 	private boolean startsStatement(Token token) {
 		return startsPrintStatement(token) ||
-			   startsDeclaration(token);
+			   startsDeclaration(token) || startsBlock(token);
 	}
 	// printStmt -> PRINT printExpressionList .
 	private ParseNode parsePrintStatement() {
