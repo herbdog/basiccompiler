@@ -7,6 +7,7 @@ import static asmCodeGenerator.codeStorage.ASMOpcode.Printf;
 import static asmCodeGenerator.codeStorage.ASMOpcode.PushD;
 import parseTree.ParseNode;
 import parseTree.nodeTypes.NewlineNode;
+import parseTree.nodeTypes.TabNode;
 import parseTree.nodeTypes.PrintStatementNode;
 import parseTree.nodeTypes.SpaceNode;
 import semanticAnalyzer.types.PrimitiveType;
@@ -28,7 +29,7 @@ public class PrintStatementGenerator {
 
 	public void generate(PrintStatementNode node) {
 		for(ParseNode child : node.getChildren()) {
-			if(child instanceof NewlineNode || child instanceof SpaceNode) {
+			if(child instanceof NewlineNode || child instanceof SpaceNode || child instanceof TabNode) {
 				ASMCodeFragment childCode = visitor.removeVoidCode(child);
 				code.append(childCode);
 			}

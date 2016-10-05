@@ -141,10 +141,15 @@ public class Parser {
 			ParseNode child = new NewlineNode(previouslyRead);
 			parent.appendChild(child);
 		}
+		else if(nowReading.isLextant(Keyword.TAB)) {
+			readToken();
+			ParseNode child = new TabNode(previouslyRead);
+			parent.appendChild(child);
+		}
 		// else we interpret the printExpression as epsilon, and do nothing
 	}
 	private boolean startsPrintExpression(Token token) {
-		return startsExpression(token) || token.isLextant(Keyword.NEWLINE) ;
+		return startsExpression(token) || token.isLextant(Keyword.NEWLINE) || token.isLextant(Keyword.TAB) ;
 	}
 	
 	

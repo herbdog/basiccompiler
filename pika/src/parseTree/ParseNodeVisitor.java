@@ -35,6 +35,7 @@ public interface ParseNodeVisitor {
 	void visit(StringConstantNode node);
 	void visit(CharacterConstantNode node);
 	void visit(NewlineNode node);
+	void visit(TabNode node);
 	void visit(SpaceNode node);
 
 	
@@ -113,6 +114,9 @@ public interface ParseNodeVisitor {
 		public void visit(NewlineNode node) {
 			defaultVisitForLeaf(node);
 		}	
+		public void visit(TabNode node) {
+			defaultVisitForLeaf(node);
+		}
 		public void visit(SpaceNode node) {
 			defaultVisitForLeaf(node);
 		}

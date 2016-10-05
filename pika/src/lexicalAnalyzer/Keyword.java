@@ -14,6 +14,7 @@ public enum Keyword implements Lextant {
 	BOOL("bool"),
 	PRINT("print"),
 	NEWLINE("_n_"),
+	TAB("_t_"),
 	TRUE("_true_"),
 	FALSE("_false_"),
 	EXEC("exec"),
