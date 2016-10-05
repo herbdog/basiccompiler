@@ -29,7 +29,6 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 	@Override
 	protected Token findNextToken() {
 		LocatedChar ch = nextNonWhitespaceChar();
-		
 		if (ch.isChar('#')) {
 			return comments(ch);
 		}

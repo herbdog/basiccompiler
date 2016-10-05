@@ -10,7 +10,7 @@ import lexicalAnalyzer.Keyword;
 import lexicalAnalyzer.Lextant;
 import lexicalAnalyzer.Punctuator;
 import lexicalAnalyzer.Scanner;
-import symbolTable.*;
+
 
 
 public class Parser {
@@ -96,6 +96,23 @@ public class Parser {
 	private boolean startsBlock(Token token) {
 		return token.isLextant(Punctuator.OPEN_BRACE);
 	}
+	private ParseNode parseBracket() {
+		if(!startsBracket(nowReading)) {
+			return syntaxErrorNode("expression");
+		}
+		ParseNode bracketnode = new BracketNode(nowReading);
+		expect(Punctuator.OPEN_BRACKET);
+		
+		while(startsStatement(nowReading)) {
+			ParseNode statement = parseStatement();
+			bracketnode.appendChild(statement);
+		}
+		expect(Punctuator.CLOSE_BRACKET);
+		return bracketnode;
+	}
+	private boolean startsBracket(Token token) {
+		return token.isLextant(Punctuator.OPEN_BRACKET);
+	}
 	
 	///////////////////////////////////////////////////////////
 	// statements
@@ -104,6 +121,9 @@ public class Parser {
 	private ParseNode parseStatement() {
 		if(nowReading.isLextant(Punctuator.OPEN_BRACE)) {
 			return parseBlock();
+		}
+		if(nowReading.isLextant(Punctuator.OPEN_BRACKET)) {
+			return parseBracket();
 		}
 		if(!startsStatement(nowReading)) {
 			return syntaxErrorNode("statement");
@@ -118,7 +138,7 @@ public class Parser {
 	}
 	private boolean startsStatement(Token token) {
 		return startsPrintStatement(token) ||
-			   startsDeclaration(token) || startsBlock(token);
+			   startsDeclaration(token) || startsBracket(token) || startsBlock(token);
 	}
 	// printStmt -> PRINT printExpressionList .
 	private ParseNode parsePrintStatement() {
@@ -242,7 +262,7 @@ public class Parser {
 	private boolean startsExpression(Token token) {
 		return startsComparisonExpression(token);
 	}
-
+	
 	// comparisonExpression -> additiveExpression [> additiveExpression]?
 	private ParseNode parseComparisonExpression() {
 		if(!startsComparisonExpression(nowReading)) {
@@ -306,19 +326,12 @@ public class Parser {
 		}
 		
 		ParseNode left = parseMultiplicativeExpression();
-		while(nowReading.isLextant(Punctuator.ADD)) {
+		while((nowReading.isLextant(Punctuator.ADD)) || (nowReading.isLextant(Punctuator.SUBTRACT))) {
 			Token additiveToken = nowReading;
 			readToken();
 			ParseNode right = parseMultiplicativeExpression();
 			
 			left = BinaryOperatorNode.withChildren(additiveToken, left, right);
-		}
-		while (nowReading.isLextant(Punctuator.SUBTRACT)) {
-			Token subtractiveToken = nowReading;
-			readToken();
-			ParseNode right = parseMultiplicativeExpression();
-			
-			left = BinaryOperatorNode.withChildren(subtractiveToken, left, right);
 		}
 		return left;
 	}
@@ -333,19 +346,12 @@ public class Parser {
 		}
 		
 		ParseNode left = parseAtomicExpression();
-		while(nowReading.isLextant(Punctuator.MULTIPLY)) {
+		while((nowReading.isLextant(Punctuator.MULTIPLY)) || (nowReading.isLextant(Punctuator.DIVIDE))) {
 			Token multiplicativeToken = nowReading;
 			readToken();
 			ParseNode right = parseAtomicExpression();
 			
 			left = BinaryOperatorNode.withChildren(multiplicativeToken, left, right);
-		}
-		while(nowReading.isLextant(Punctuator.DIVIDE)) {
-			Token divisiveToken = nowReading;
-			readToken();
-			ParseNode right = parseAtomicExpression();
-			
-			left = BinaryOperatorNode.withChildren(divisiveToken, left, right);
 		}
 		return left;
 	}
