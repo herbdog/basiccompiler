@@ -8,8 +8,8 @@ import inputHandler.LocatedCharString;
 
 public class PartiallyScannedPunctuator extends LocatedCharString {
 
-	public PartiallyScannedPunctuator(LocatedChar c) {
-		super(c);
+	public PartiallyScannedPunctuator(LocatedChar ch) {
+		super(ch);
 	}
 
 	

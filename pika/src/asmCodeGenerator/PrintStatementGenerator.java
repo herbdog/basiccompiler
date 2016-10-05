@@ -52,7 +52,6 @@ public class PrintStatementGenerator {
 					for (int i = 0; i < globalnode.getChildren().size(); i++) {
 						ParseNode localnode = globalnode.child(i);
 						if ((localnode.getLocalScope() == node.getLocalScope()) && (localnode.toString().contains(Decnode) && (localnode.toString().contains(identifier) && (localnode.toString().contains(isstring)) && (localnode.toString().contains(variablename))))) {
-							System.out.print(localnode);
 							if (localnode.child(0).getChildren().isEmpty()) { //lowest level of declaration node
 								format = localnode.child(1).getToken().getLexeme().replace("\"","");
 								break;

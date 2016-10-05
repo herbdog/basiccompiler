@@ -86,7 +86,6 @@ public class FunctionSignature {
 	// Signatures for pika-0 operators
 	// this section will probably disappear in pika-1 (in favor of FunctionSignatures)
 	
-	private static FunctionSignature greaterSignature = new FunctionSignature(1, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.BOOLEAN);
 
 	
 	// the switch here is ugly compared to polymorphism.  This should perhaps be a method on Lextant.
@@ -99,7 +98,12 @@ public class FunctionSignature {
 		case SUBTRACT:	return FunctionSignatures.signaturesOf(Punctuator.SUBTRACT).acceptingSignature(TypeList);
 		case MULTIPLY:	return FunctionSignatures.signaturesOf(Punctuator.MULTIPLY).acceptingSignature(TypeList);
 		case DIVIDE:	return FunctionSignatures.signaturesOf(Punctuator.DIVIDE).acceptingSignature(TypeList);
-		case GREATER:	return greaterSignature;
+		case GREATER:	return FunctionSignatures.signaturesOf(Punctuator.GREATER).acceptingSignature(TypeList);
+		case GREATER_EQUAL:	return FunctionSignatures.signaturesOf(Punctuator.GREATER_EQUAL).acceptingSignature(TypeList);
+		case LESS:		return FunctionSignatures.signaturesOf(Punctuator.LESS).acceptingSignature(TypeList);
+		case LESS_EQUAL:	return FunctionSignatures.signaturesOf(Punctuator.LESS_EQUAL).acceptingSignature(TypeList);
+		case EQUAL:		return FunctionSignatures.signaturesOf(Punctuator.EQUAL).acceptingSignature(TypeList);
+		case NOTEQUAL:	return FunctionSignatures.signaturesOf(Punctuator.NOTEQUAL).acceptingSignature(TypeList);
 
 		default:
 			return neverMatchedSignature;

@@ -225,11 +225,46 @@ public class Parser {
 		
 		ParseNode left = parseAdditiveExpression();
 		if(nowReading.isLextant(Punctuator.GREATER)) {
-			Token compareToken = nowReading;
+			Token greatercompareToken = nowReading;
 			readToken();
 			ParseNode right = parseAdditiveExpression();
 			
-			return BinaryOperatorNode.withChildren(compareToken, left, right);
+			return BinaryOperatorNode.withChildren(greatercompareToken, left, right);
+		}
+		else if(nowReading.isLextant(Punctuator.GREATER_EQUAL)) {
+			Token greaterequalcompareToken = nowReading;
+			readToken();
+			ParseNode right = parseAdditiveExpression();
+			
+			return BinaryOperatorNode.withChildren(greaterequalcompareToken, left, right);
+		}
+		else if(nowReading.isLextant(Punctuator.LESS)) {
+			Token lesscompareToken = nowReading;
+			readToken();
+			ParseNode right = parseAdditiveExpression();
+			
+			return BinaryOperatorNode.withChildren(lesscompareToken, left, right);
+		}
+		else if(nowReading.isLextant(Punctuator.LESS_EQUAL)) {
+			Token lessequalcompareToken = nowReading;
+			readToken();
+			ParseNode right = parseAdditiveExpression();
+			
+			return BinaryOperatorNode.withChildren(lessequalcompareToken, left, right);
+		}
+		else if(nowReading.isLextant(Punctuator.EQUAL)) {
+			Token equalcompareToken = nowReading;
+			readToken();
+			ParseNode right = parseAdditiveExpression();
+			
+			return BinaryOperatorNode.withChildren(equalcompareToken, left, right);
+		}
+		else if(nowReading.isLextant(Punctuator.NOTEQUAL)) {
+			Token notequalcompareToken = nowReading;
+			readToken();
+			ParseNode right = parseAdditiveExpression();
+			
+			return BinaryOperatorNode.withChildren(notequalcompareToken, left, right);
 		}
 		return left;
 
