@@ -218,7 +218,6 @@ public class ASMCodeGenerator {
 			
 			code.append(lvalue);
 			code.append(rvalue);
-			
 			Type type = node.getType();
 			code.add(opcodeForStore(type));
 		}
@@ -242,7 +241,17 @@ public class ASMCodeGenerator {
 			return null;
 		}
 
+		public void visitLeave(AssignNode node) {
+			newVoidCode(node);
+			ASMCodeFragment lvalue = removeAddressCode(node.child(0));
+			ASMCodeFragment rvalue = removeValueCode(node.child(1));
 
+			
+			code.append(lvalue);
+			code.append(rvalue);
+			Type type = node.child(1).getType();
+			code.add(opcodeForStore(type));
+		}
 		///////////////////////////////////////////////////////////////////////////
 		// expressions
 		public void visitLeave(BinaryOperatorNode node) {

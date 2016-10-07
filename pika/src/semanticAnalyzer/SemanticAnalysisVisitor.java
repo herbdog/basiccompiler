@@ -3,6 +3,7 @@ package semanticAnalyzer;
 import java.util.Arrays;
 import java.util.List;
 
+import lexicalAnalyzer.Keyword;
 import lexicalAnalyzer.Lextant;
 import logging.PikaLogger;
 import parseTree.ParseNode;
@@ -48,7 +49,6 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 	public void visitLeave(BracketNode node) {
 	}
 	
-	
 	///////////////////////////////////////////////////////////////////////////
 	// helper methods for scoping.
 	private void enterProgramScope(ParseNode node) {
@@ -79,6 +79,21 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		
 		identifier.setType(declarationType);
 		addBinding(identifier, declarationType);
+	}
+	
+	public void visitLeave(AssignNode node) {
+		CharSequence Decnode = "DeclarationNode (CONST)";
+		CharSequence identifiernode = "IdentifierNode";
+		CharSequence variablename = node.child(0).getToken().getLexeme();
+		for (ParseNode globalnode : node.pathToRoot()) {
+			for (int i = 0; i < globalnode.getChildren().size(); i++) {
+				ParseNode localnode = globalnode.child(i);
+				if ((localnode.getScope() == node.getScope()) && (localnode.toString().contains(Decnode)) && (localnode.toString().contains(identifiernode)) && (localnode.toString().contains(variablename))) {
+					logError("identifier declared as const may not be reassigned");
+				}
+			}
+		}
+		
 	}
 
 	///////////////////////////////////////////////////////////////////////////

@@ -81,7 +81,7 @@ public class Parser {
 	// inner block statements
 	private ParseNode parseBlock() {
 		if (!startsBlock(nowReading)) {
-			return syntaxErrorNode("mainBlock");
+			return syntaxErrorNode("Block");
 		}
 		ParseNode Block = new BlockNode(nowReading);
 		expect(Punctuator.OPEN_BRACE);
@@ -98,17 +98,17 @@ public class Parser {
 	}
 	private ParseNode parseBracket() {
 		if(!startsBracket(nowReading)) {
-			return syntaxErrorNode("expression");
+			return syntaxErrorNode("bracket");
 		}
-		ParseNode bracketnode = new BracketNode(nowReading);
+		ParseNode bracket = new BracketNode(nowReading);
 		expect(Punctuator.OPEN_BRACKET);
 		
-		while(startsStatement(nowReading)) {
-			ParseNode statement = parseStatement();
-			bracketnode.appendChild(statement);
+		while(startsExpression(nowReading)) {
+			ParseNode statement = parseExpression();
+			bracket.appendChild(statement);
 		}
 		expect(Punctuator.CLOSE_BRACKET);
-		return bracketnode;
+		return bracket;
 	}
 	private boolean startsBracket(Token token) {
 		return token.isLextant(Punctuator.OPEN_BRACKET);
@@ -119,17 +119,17 @@ public class Parser {
 	
 	// statement-> declaration | printStmt
 	private ParseNode parseStatement() {
-		if(nowReading.isLextant(Punctuator.OPEN_BRACE)) {
-			return parseBlock();
-		}
-		if(nowReading.isLextant(Punctuator.OPEN_BRACKET)) {
-			return parseBracket();
-		}
 		if(!startsStatement(nowReading)) {
 			return syntaxErrorNode("statement");
 		}
+		if(startsBlock(nowReading)) {
+			return parseBlock();
+		}
 		if(startsDeclaration(nowReading)) {
 			return parseDeclaration();
+		}
+		if(startsAssign(nowReading)) {
+			return parseAssign();
 		}
 		if(startsPrintStatement(nowReading)) {
 			return parsePrintStatement();
@@ -138,7 +138,7 @@ public class Parser {
 	}
 	private boolean startsStatement(Token token) {
 		return startsPrintStatement(token) ||
-			   startsDeclaration(token) || startsBracket(token) || startsBlock(token);
+			   startsDeclaration(token) || startsBlock(token) || startsAssign(token);
 	}
 	// printStmt -> PRINT printExpressionList .
 	private ParseNode parsePrintStatement() {
@@ -238,7 +238,25 @@ public class Parser {
 		return DeclarationNode.withChildren(declarationToken, identifier, initializer);
 	}
 	private boolean startsDeclaration(Token token) {
-		return token.isLextant(Keyword.CONST);
+		return token.isLextant(Keyword.CONST) || token.isLextant(Keyword.VAR);
+	}
+	
+	//assignment identifier := expression (VAR ONLY)
+	private ParseNode parseAssign() {
+		if(!startsAssign(nowReading)) {
+			return syntaxErrorNode("assignment");
+		}
+		Token assigntoken = nowReading;
+		
+		ParseNode identifier = parseExpression();
+		expect(Punctuator.ASSIGN);
+		ParseNode assignment = parseExpression();
+		expect(Punctuator.TERMINATOR);
+		
+		return AssignNode.withChildren(assigntoken, identifier, assignment);
+	}
+	private boolean startsAssign(Token token) {
+		return (token instanceof IdentifierToken);
 	}
 
 	// starting keywords for types
@@ -257,10 +275,13 @@ public class Parser {
 		if(!startsExpression(nowReading)) {
 			return syntaxErrorNode("expression");
 		}
+		if(startsBracket(nowReading)) {
+			return parseBracket();
+		}
 		return parseComparisonExpression();
 	}
 	private boolean startsExpression(Token token) {
-		return startsComparisonExpression(token);
+		return startsComparisonExpression(token) || startsBracket(token);
 	}
 	
 	// comparisonExpression -> additiveExpression [> additiveExpression]?
