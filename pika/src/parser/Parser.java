@@ -96,23 +96,6 @@ public class Parser {
 	private boolean startsBlock(Token token) {
 		return token.isLextant(Punctuator.OPEN_BRACE);
 	}
-	private ParseNode parseBracket() {
-		if(!startsBracket(nowReading)) {
-			return syntaxErrorNode("bracket");
-		}
-		ParseNode bracket = new BracketNode(nowReading);
-		expect(Punctuator.OPEN_BRACKET);
-		
-		while(startsExpression(nowReading)) {
-			ParseNode statement = parseExpression();
-			bracket.appendChild(statement);
-		}
-		expect(Punctuator.CLOSE_BRACKET);
-		return bracket;
-	}
-	private boolean startsBracket(Token token) {
-		return token.isLextant(Punctuator.OPEN_BRACKET);
-	}
 	
 	///////////////////////////////////////////////////////////
 	// statements
@@ -271,31 +254,43 @@ public class Parser {
 	// literal                  -> intNumber | identifier | booleanConstant
 
 	// expr  -> comparisonExpression
-	private ParseNode parseExpression() {		
+	private ParseNode parseExpression() {	
 		if(!startsExpression(nowReading)) {
 			return syntaxErrorNode("expression");
 		}
-		if(startsBracket(nowReading)) {
-			return parseBracket();
+		while(startsBracketExpression(nowReading)) {
+			return parseBracketExpression();
 		}
 		return parseComparisonExpression();
 	}
 	private boolean startsExpression(Token token) {
-		return startsComparisonExpression(token) || startsBracket(token);
+		return startsBracketExpression(token) || startsComparisonExpression(token);
 	}
-	
+	// BRACKETS 
+	private ParseNode parseBracketExpression() {
+		if(!startsBracketExpression(nowReading)) {
+			return syntaxErrorNode("BracketExpression");
+		}
+		expect(Punctuator.OPEN_BRACKET);
+		ParseNode bracketnode = parseExpression();
+		expect(Punctuator.CLOSE_BRACKET);
+		return  bracketnode;
+	}
+	private boolean startsBracketExpression(Token token) {
+		return token.isLextant(Punctuator.OPEN_BRACKET);
+	}
+
 	// comparisonExpression -> additiveExpression [> additiveExpression]?
 	private ParseNode parseComparisonExpression() {
 		if(!startsComparisonExpression(nowReading)) {
 			return syntaxErrorNode("comparison expression");
 		}
-		
 		ParseNode left = parseAdditiveExpression();
 		if(nowReading.isLextant(Punctuator.GREATER)) {
 			Token greatercompareToken = nowReading;
 			readToken();
 			ParseNode right = parseAdditiveExpression();
-			
+
 			return BinaryOperatorNode.withChildren(greatercompareToken, left, right);
 		}
 		else if(nowReading.isLextant(Punctuator.GREATER_EQUAL)) {
@@ -375,7 +370,7 @@ public class Parser {
 			left = BinaryOperatorNode.withChildren(multiplicativeToken, left, right);
 		}
 		return left;
-	}
+	}	
 	private boolean startsMultiplicativeExpression(Token token) {
 		return startsAtomicExpression(token);
 	}

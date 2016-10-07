@@ -42,6 +42,7 @@ public class PrintStatementGenerator {
 	private void appendPrintCode(ParseNode node) {
 		String format = null;
 		CharSequence Decnode = "DeclarationNode";
+		CharSequence Assnode = "AssignNode";
 		CharSequence identifier = "IdentifierNode";
 		CharSequence isstring = "STRING";
 		CharSequence variablename = node.getToken().getLexeme();
@@ -51,10 +52,10 @@ public class PrintStatementGenerator {
 				pathtoroot:
 				while (!globalnode.containsBindingOf("ProgramNode (EXEC)")) {
 					globalnode = globalnode.getParent();
-					for (int i = 0; i < globalnode.getChildren().size(); i++) {
+					for (int i = globalnode.getChildren().size() - 1; i >= 0 ; i--) { //goes from most recent to last, since declaration must come before assignment
 						ParseNode localnode = globalnode.child(i);
-						if ((localnode.getScope() == node.getScope()) && (localnode.toString().contains(Decnode)) && (localnode.toString().contains(identifier)) && (localnode.toString().contains(isstring)) && (localnode.toString().contains(variablename))) {
-							if (localnode.child(0).getChildren().isEmpty()) { //lowest level of declaration node
+						if ((localnode.getScope() == node.getScope()) && ((localnode.toString().contains(Decnode)) || (localnode.toString().contains(Assnode))) && (localnode.toString().contains(identifier)) && (localnode.toString().contains(isstring)) && (localnode.toString().contains(variablename))) {
+							if (localnode.child(0).getChildren().isEmpty()) { //lowest level of declaration nod
 								format = localnode.child(1).getToken().getLexeme().replace("\"","");
 								break pathtoroot;
 							}

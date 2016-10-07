@@ -14,9 +14,6 @@ public interface ParseNodeVisitor {
 	
 	void visitEnter(BlockNode node);
 	void visitLeave(BlockNode node);
-	
-	void visitEnter(BracketNode node);
-	void visitLeave(BracketNode node);
 
 	void visitEnter(DeclarationNode node);
 	void visitLeave(DeclarationNode node);
@@ -88,12 +85,6 @@ public interface ParseNodeVisitor {
 			defaultVisitEnter(node);
 		}
 		public void visitLeave(BlockNode node) {
-			defaultVisitLeave(node);
-		}
-		public void visitEnter(BracketNode node) {
-			defaultVisitEnter(node);
-		}
-		public void visitLeave(BracketNode node) {
 			defaultVisitLeave(node);
 		}
 		public void visitEnter(ParseNode node) {
