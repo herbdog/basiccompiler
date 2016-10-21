@@ -258,9 +258,6 @@ public class Parser {
 		if(!startsExpression(nowReading)) {
 			return syntaxErrorNode("expression");
 		}
-		while(startsBracketExpression(nowReading)) {
-			return parseBracketExpression();
-		}
 		return parseComparisonExpression();
 	}
 	private boolean startsExpression(Token token) {
@@ -380,10 +377,13 @@ public class Parser {
 		if(!startsAtomicExpression(nowReading)) {
 			return syntaxErrorNode("atomic expression");
 		}
+		if(startsBracketExpression(nowReading)) {
+			return parseBracketExpression();
+		}
 		return parseLiteral();
 	}
 	private boolean startsAtomicExpression(Token token) {
-		return startsLiteral(token);
+		return startsLiteral(token) || startsBracketExpression(token);
 	}
 	
 	// literal -> number | identifier | booleanConstant

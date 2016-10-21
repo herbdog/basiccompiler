@@ -35,6 +35,14 @@ public abstract class ScannerImp implements Scanner {
 		}
 		return false;
 	}
+	
+	public boolean wasBracket() {
+		Token result = nextToken;
+		if (result.isLextant(Punctuator.CLOSE_BRACKET)) {
+			return true;
+		}
+		return false;
+	}
 
 	@Override
 	public void remove() {
