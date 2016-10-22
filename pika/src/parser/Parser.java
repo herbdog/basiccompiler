@@ -241,7 +241,6 @@ public class Parser {
 	private boolean startsAssign(Token token) {
 		return (token instanceof IdentifierToken);
 	}
-
 	// starting keywords for types
 	
 	///////////////////////////////////////////////////////////
@@ -261,20 +260,7 @@ public class Parser {
 		return parseComparisonExpression();
 	}
 	private boolean startsExpression(Token token) {
-		return startsBracketExpression(token) || startsComparisonExpression(token);
-	}
-	// BRACKETS 
-	private ParseNode parseBracketExpression() {
-		if(!startsBracketExpression(nowReading)) {
-			return syntaxErrorNode("BracketExpression");
-		}
-		expect(Punctuator.OPEN_BRACKET);
-		ParseNode bracketnode = parseExpression();
-		expect(Punctuator.CLOSE_BRACKET);
-		return  bracketnode;
-	}
-	private boolean startsBracketExpression(Token token) {
-		return token.isLextant(Punctuator.OPEN_BRACKET);
+		return startsComparisonExpression(token);
 	}
 
 	// comparisonExpression -> additiveExpression [> additiveExpression]?
@@ -380,18 +366,53 @@ public class Parser {
 		if(startsBracketExpression(nowReading)) {
 			return parseBracketExpression();
 		}
+		if(startsCastingExpression(nowReading)) {
+			return parseCastingExpression();
+		}
 		return parseLiteral();
 	}
 	private boolean startsAtomicExpression(Token token) {
-		return startsLiteral(token) || startsBracketExpression(token);
+		return startsLiteral(token) || startsBracketExpression(token) || startsCastingExpression(token);
 	}
-	
+	// BRACKETS 
+	private ParseNode parseBracketExpression() {
+		if(!startsBracketExpression(nowReading)) {
+			return syntaxErrorNode("BracketExpression");
+		}
+		expect(Punctuator.OPEN_BRACKET);
+		ParseNode bracketnode = parseExpression();
+		expect(Punctuator.CLOSE_BRACKET);
+		return  bracketnode;
+	}
+	private boolean startsBracketExpression(Token token) {
+		return token.isLextant(Punctuator.OPEN_BRACKET);
+	}
+	//casting
+	private ParseNode parseCastingExpression() {
+		if (!startsCastingExpression(nowReading)) {
+			return syntaxErrorNode("CastingExpression");
+		}
+		expect(Punctuator.OPEN_SQUARE_BRACKET);
+		ParseNode expr = parseExpression();
+		while(nowReading.isLextant(Punctuator.CAST)) {
+			Token cast = nowReading;
+			readToken();
+			ParseNode type = new TypeNode(nowReading);
+			expr = BinaryOperatorNode.withChildren(cast, expr, type);
+		}
+		readToken();
+		expect(Punctuator.CLOSE_SQUARE_BRACKET);
+		return expr;
+		
+	}
+	private boolean startsCastingExpression(Token token) {
+		return token.isLextant(Punctuator.OPEN_SQUARE_BRACKET);
+	}
 	// literal -> number | identifier | booleanConstant
 	private ParseNode parseLiteral() {
 		if(!startsLiteral(nowReading)) {
 			return syntaxErrorNode("literal");
 		}
-		
 		if(startsIntNumber(nowReading)) {
 			return parseIntNumber();
 		}

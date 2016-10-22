@@ -45,6 +45,8 @@ public class PrintStatementGenerator {
 		CharSequence Assnode = "AssignNode";
 		CharSequence identifier = "IdentifierNode";
 		CharSequence isstring = "STRING";
+		CharSequence casted = "CAST";
+		CharSequence stringnode = "StringConstantNode";
 		CharSequence variablename = node.getToken().getLexeme();
 		if (node.getType() == PrimitiveType.STRING) {
 			if ((node.toString().contains(identifier) && (node.toString().contains(isstring)))) { //printing via identifier
@@ -56,6 +58,14 @@ public class PrintStatementGenerator {
 						ParseNode localnode = globalnode.child(i);
 						if ((localnode.getScope() == node.getScope()) && ((localnode.toString().contains(Decnode)) || (localnode.toString().contains(Assnode))) && (localnode.toString().contains(identifier)) && (localnode.toString().contains(isstring)) && (localnode.toString().contains(variablename))) {
 							if (localnode.child(0).getChildren().isEmpty()) { //lowest level of declaration nod
+								if ((localnode.child(1).toString().contains(casted)) && (localnode.child(1).child(0).toString().contains(identifier))) {
+									variablename = localnode.child(1).child(0).toString();
+									continue;
+								}
+								if ((localnode.child(1).toString().contains(casted)) && (localnode.child(1).child(0).toString().contains(stringnode))) {
+									format = localnode.child(1).child(0).getToken().getLexeme().replace("\"","");
+									break pathtoroot;
+								}
 								format = localnode.child(1).getToken().getLexeme().replace("\"","");
 								break pathtoroot;
 							}

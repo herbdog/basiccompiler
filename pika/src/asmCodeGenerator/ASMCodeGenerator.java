@@ -105,7 +105,7 @@ public class ASMCodeGenerator {
 			makeFragmentValueCode(frag, node);
 			return frag;
 		}		
-		private ASMCodeFragment removeAddressCode(ParseNode node) {
+		ASMCodeFragment removeAddressCode(ParseNode node) {
 			ASMCodeFragment frag = getAndRemoveCode(node);
 			assert frag.isAddress();
 			return frag;
@@ -207,7 +207,6 @@ public class ASMCodeGenerator {
 			newVoidCode(node);
 			ASMCodeFragment lvalue = removeAddressCode(node.child(0));	
 			ASMCodeFragment rvalue = removeValueCode(node.child(1));
-
 			
 			code.append(lvalue);
 			code.append(rvalue);
@@ -245,6 +244,7 @@ public class ASMCodeGenerator {
 			Type type = node.child(1).getType();
 			code.add(opcodeForStore(type));
 		}
+		
 		///////////////////////////////////////////////////////////////////////////
 		// expressions
 		public void visitLeave(BinaryOperatorNode node) {
@@ -267,6 +267,9 @@ public class ASMCodeGenerator {
 			}
 			else if(operator == Punctuator.NOTEQUAL) {
 				visitNotEqualOperatorNode(node, operator);
+			}
+			else if(operator == Punctuator.CAST) {
+				visitCastOperatorNode(node);
 			}
 			else {
 				visitNormalBinaryOperatorNode(node);
@@ -592,6 +595,15 @@ public class ASMCodeGenerator {
 			code.add(Jump, joinLabel);
 			code.add(Label, joinLabel);
 
+		}
+		private void visitCastOperatorNode(BinaryOperatorNode node) {
+			newValueCode(node);
+			ASMCodeFragment arg1 = removeValueCode(node.child(0));
+			code.append(arg1);	
+			if((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.FLOAT))
+				code.add(ConvertF);
+			if((node.child(0).getType() == PrimitiveType.FLOAT) && (node.child(1).getType() == PrimitiveType.INTEGER))
+				code.add(ConvertI);
 		}
 		private void visitNormalBinaryOperatorNode(BinaryOperatorNode node) {
 			newValueCode(node);

@@ -121,7 +121,19 @@ public class FunctionSignatures extends ArrayList<FunctionSignature> {
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN),
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.CHAR, PrimitiveType.CHAR, PrimitiveType.BOOLEAN)
 		);
-		
+		new FunctionSignatures(Punctuator.CAST,
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.INTEGER, PrimitiveType.CHAR, PrimitiveType.CHAR),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.INTEGER, PrimitiveType.FLOAT, PrimitiveType.FLOAT),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.INTEGER, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.INTEGER),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.FLOAT, PrimitiveType.INTEGER, PrimitiveType.INTEGER),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.FLOAT, PrimitiveType.FLOAT, PrimitiveType.FLOAT),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.CHAR, PrimitiveType.INTEGER, PrimitiveType.INTEGER),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.CHAR, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.CHAR, PrimitiveType.CHAR, PrimitiveType.CHAR),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.STRING, PrimitiveType.STRING, PrimitiveType.STRING),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN)
+		);
 
 	}
 

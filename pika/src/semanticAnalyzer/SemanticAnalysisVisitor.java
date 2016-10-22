@@ -89,8 +89,12 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 				}
 			}
 		}
+		if (node.child(0).getType() != node.child(1).getType()) {
+			logError("Assign operator not defined for types [" + node.child(0).getType() + "," + node.child(1).getType() + "]");
+		}
 		
 	}
+	
 
 	///////////////////////////////////////////////////////////////////////////
 	// expressions
@@ -99,6 +103,7 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		assert node.nChildren() == 2;
 		ParseNode left  = node.child(0);
 		ParseNode right = node.child(1);
+		
 		List<Type> childTypes = Arrays.asList(left.getType(), right.getType());
 		
 		Lextant operator = operatorFor(node);
@@ -149,6 +154,24 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 	@Override
 	public void visit(SpaceNode node) {
 	}
+	public void visit(TypeNode node) {
+		if(node.getToken().isLextant(Keyword.INT)) {
+			node.setType(PrimitiveType.INTEGER);
+		}
+		if(node.getToken().isLextant(Keyword.FLOAT)) {
+			node.setType(PrimitiveType.FLOAT);
+		}
+		if(node.getToken().isLextant(Keyword.CHAR)) {
+			node.setType(PrimitiveType.CHAR);
+		}
+		if(node.getToken().isLextant(Keyword.STRING)) {
+			node.setType(PrimitiveType.STRING);
+		}
+		if(node.getToken().isLextant(Keyword.BOOL)) {
+			node.setType(PrimitiveType.BOOLEAN);
+		}
+	}
+
 	///////////////////////////////////////////////////////////////////////////
 	// IdentifierNodes, with helper methods
 	@Override
