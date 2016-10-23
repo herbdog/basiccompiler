@@ -1,6 +1,8 @@
 package asmCodeGenerator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import asmCodeGenerator.codeStorage.ASMCodeFragment;
@@ -20,6 +22,7 @@ import static asmCodeGenerator.codeStorage.ASMOpcode.*;
 // do not call the code generator if any errors have occurred during analysis.
 public class ASMCodeGenerator {
 	ParseNode root;
+	public List<String> stringlist;
 
 	public static ASMCodeFragment generate(ParseNode syntaxTree) {
 		ASMCodeGenerator codeGenerator = new ASMCodeGenerator(syntaxTree);
@@ -28,11 +31,12 @@ public class ASMCodeGenerator {
 	public ASMCodeGenerator(ParseNode root) {
 		super();
 		this.root = root;
+		stringlist = new ArrayList<String>();
 	}
 	
 	public ASMCodeFragment makeASM() {
 		ASMCodeFragment code = new ASMCodeFragment(GENERATES_VOID);
-		
+
 		code.append( RunTime.getEnvironment() );
 		code.append( globalVariableBlockASM() );
 		code.append( programASM() );
@@ -184,7 +188,7 @@ public class ASMCodeGenerator {
 
 		public void visitLeave(PrintStatementNode node) {
 			newVoidCode(node);
-			new PrintStatementGenerator(code, this).generate(node);	
+			new PrintStatementGenerator(code, this, stringlist).generate(node);	
 		}
 		public void visit(NewlineNode node) {
 			newVoidCode(node);
@@ -207,7 +211,19 @@ public class ASMCodeGenerator {
 			newVoidCode(node);
 			ASMCodeFragment lvalue = removeAddressCode(node.child(0));	
 			ASMCodeFragment rvalue = removeValueCode(node.child(1));
-			
+			if(node.child(1).getType() == PrimitiveType.STRING) {
+				if(node.child(1).getToken().toString().contains("CAST")) {
+					String temp = stringlist.get(stringlist.size()-1);
+					String temp2 = node.child(0).getToken().getLexeme().toString();
+					stringlist.remove(stringlist.size()-1);
+					stringlist.add(temp.concat(temp2));
+				}
+				else {
+					stringlist.remove(stringlist.size()-1);
+					stringlist.add(node.child(0).getToken().getLexeme());
+				}
+			}
+		
 			code.append(lvalue);
 			code.append(rvalue);
 			Type type = node.getType();
@@ -237,7 +253,19 @@ public class ASMCodeGenerator {
 			newVoidCode(node);
 			ASMCodeFragment lvalue = removeAddressCode(node.child(0));
 			ASMCodeFragment rvalue = removeValueCode(node.child(1));
-
+			if(node.child(1).getType() == PrimitiveType.STRING) {
+				if(node.child(1).getToken().toString().contains("CAST")) {
+					String temp = stringlist.get(stringlist.size()-1);
+					String temp2 = node.child(0).getToken().getLexeme().toString();
+					stringlist.remove(stringlist.size()-1);
+					stringlist.add(temp.concat(temp2));
+				}
+				else {
+					stringlist.remove(stringlist.size()-1);
+					stringlist.add(node.child(0).getToken().getLexeme());
+				}
+			}
+			
 			
 			code.append(lvalue);
 			code.append(rvalue);
@@ -672,7 +700,9 @@ public class ASMCodeGenerator {
 		public void visit(StringConstantNode node) {
 			newAddressCode(node);
 			newValueCode(node);
-			code.add(DLabel, node.getValue());
+			Labeller label = new Labeller("StringConstant");
+			stringlist.add(node.getValue());
+			code.add(DLabel, label.newLabel(""));
 			code.add(DataS, node.getValue());
 		}
 		public void visit(CharacterConstantNode node) {
