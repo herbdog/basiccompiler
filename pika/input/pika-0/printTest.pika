@@ -9,3 +9,43 @@ exec {
     			 
     print value;; value; _n_, _n_, value, _n_, nickels; pennies; _n_.
 }
+
+}
+		List<ASMCodeChunk> chunks = fragment.toChunks();
+		List<String> dlabels = new ArrayList<String>();
+		LinkedHashSet<String> distinctstrings = new LinkedHashSet<String>();
+		HashSet<String> hashcodes = new HashSet<>();
+		for (ASMCodeChunk chunk: chunks) {
+			if((chunk.toString().contains("-StringConstant-")) && (chunk.toString().contains("DataC"))) {
+				hashcodes.add(Integer.toString(chunk.toString().substring(chunk.toString().indexOf('\n')+1).hashCode()));
+				distinctstrings.add(chunk.toString().substring(chunk.toString().indexOf('\n')+1));
+				dlabels.add(chunk.toString().substring(0,chunk.toString().indexOf('\n')));
+			}
+		}
+		String newchunk = "";
+		String datachunk = "";
+		for (ASMCodeChunk chunk: chunks) {
+			if ((chunk.toString().contains("-StringConstant-")) && (chunk.toString().contains("DataC"))) {
+				for (String hashcode : hashcodes) {
+					for (String dlabel : dlabels) {
+						if ((Integer.toString(chunk.toString().substring(chunk.toString().indexOf('\n')+1).hashCode()).contentEquals(hashcode)) && (chunk.toString().contains(dlabel))) {
+							newchunk += dlabel;
+							datachunk = chunk.toString().substring(chunk.toString().indexOf('\n')+1);
+						}	
+					}
+					if ((chunk.toString().contains("-StringConstant-")) && (chunk.toString().contains("DataC"))) {
+					}
+				}
+			}
+		}
+		newchunk+=datachunk;
+		String replacementchunk = "";
+		String newfragment = fragment.toString();
+		for (ASMCodeChunk chunk: chunks) {
+			if ((chunk.toString().contains("-StringConstant-")) && (chunk.toString().contains("DataC"))) {
+				replacementchunk = chunk.toString();
+				newfragment = newfragment.replaceAll(replacementchunk, newchunk);
+			}
+		}
+		ASMCodeFragment newfrag = new ASMCodeFragment(CodeType.GENERATES_VOID);
+		

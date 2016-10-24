@@ -1,5 +1,6 @@
 package optimizer;
 
+
 import asmCodeGenerator.codeStorage.ASMCodeFragment;
 
 public class Optimizer {
@@ -14,6 +15,9 @@ public class Optimizer {
 	}
 	
 	public ASMCodeFragment optimize() {
+
 		return fragment;
 	}
 }
+
+

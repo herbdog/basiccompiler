@@ -47,29 +47,8 @@ public class PrintStatementGenerator {
 
 	private void appendPrintCode(ParseNode node) {
 		String format = null;
-		int iterator = stringlist.size();
 		if (node.getType() == PrimitiveType.STRING) {
-			iter:
-			for (int i = stringlist.size()-1; i > 0; i--) {
-				
-				if(stringlist.get(i).toString().contains(node.getToken().getLexeme().replaceAll("\"",""))) {
-					break iter;
-				}
-				if(node.toString().contains("CAST")) {
-					ParseNode tempnode = node.child(0);
-					while(!tempnode.getChildren().isEmpty()) {
-						if(stringlist.get(i).contains(tempnode.getToken().getLexeme().replaceAll("\"", ""))) {
-							break iter;
-						}
-						tempnode = tempnode.child(0);
-					}
-					if(stringlist.get(i).contains(tempnode.getToken().getLexeme().replaceAll("\"", ""))) {
-						break iter;
-					}
-				}
-				iterator--;
-			}
-			format = "-StringConstant-" + iterator + "-";
+			format = printString(node);
 		}
 		else {
 			format = printFormat(node.getType());
@@ -95,6 +74,32 @@ public class PrintStatementGenerator {
 		code.add(Label, trueLabel);
 		code.add(PushD, RunTime.BOOLEAN_TRUE_STRING);
 		code.add(Label, endLabel);
+	}
+	
+	private String printString(ParseNode node) {
+		String format = null;
+		int iterator = stringlist.size();
+		iter:
+		for (int i = stringlist.size()-1; i > 0; i--) {
+			if(stringlist.get(i).toString().contains(node.getToken().getLexeme().replaceAll("\"",""))) {
+				break iter;
+			}
+			if(node.toString().contains("CAST")) {
+				ParseNode tempnode = node.child(0);
+				while(!tempnode.getChildren().isEmpty()) {
+					if(stringlist.get(i).contains(tempnode.getToken().getLexeme().replaceAll("\"", ""))) {
+						break iter;
+					}
+					tempnode = tempnode.child(0);
+				}
+				if(stringlist.get(i).contains(tempnode.getToken().getLexeme().replaceAll("\"", ""))) {
+					break iter;
+				}
+			}
+			iterator--;
+		}
+		format = "-StringConstant-" + iterator + "-";
+		return format;
 	}
 
 

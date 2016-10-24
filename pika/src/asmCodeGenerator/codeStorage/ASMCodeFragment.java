@@ -95,6 +95,10 @@ public class ASMCodeFragment {
 		}
 		return buffer.toString();
 	}
+	
+	public List<ASMCodeChunk> toChunks() {
+		return chunks;
+	}
 
 	public static ASMCodeFragment readFrom(String filename) {
 		System.out.println("readFrom: " + filename);

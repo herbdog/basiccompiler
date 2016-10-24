@@ -262,6 +262,19 @@ public class Parser {
 	private boolean startsExpression(Token token) {
 		return startsComparisonExpression(token);
 	}
+	
+	private ParseNode parseNotExpression() {
+		if (!startsNotExpression(nowReading)) {
+			return syntaxErrorNode("not expression");
+		}
+		Token nottoken = nowReading;
+		readToken();
+		ParseNode right = parseAdditiveExpression();
+		return NotOperatorNode.withChildren(nottoken, right);
+	}
+	private boolean startsNotExpression(Token token) {
+		return token.isLextant(Punctuator.NOT);
+	}
 
 	// comparisonExpression -> additiveExpression [> additiveExpression]?
 	private ParseNode parseComparisonExpression() {
@@ -310,6 +323,20 @@ public class Parser {
 			ParseNode right = parseAdditiveExpression();
 			
 			return BinaryOperatorNode.withChildren(notequalcompareToken, left, right);
+		}
+		else if(nowReading.isLextant(Punctuator.AND)) {
+			Token andToken = nowReading;
+			readToken();
+			ParseNode right = parseAdditiveExpression();
+			
+			return BinaryOperatorNode.withChildren(andToken, left, right);
+		}
+		else if(nowReading.isLextant(Punctuator.OR)) {
+			Token orToken = nowReading;
+			readToken();
+			ParseNode right = parseAdditiveExpression();
+			
+			return BinaryOperatorNode.withChildren(orToken, left, right);
 		}
 		return left;
 
@@ -369,10 +396,13 @@ public class Parser {
 		if(startsCastingExpression(nowReading)) {
 			return parseCastingExpression();
 		}
+		if(startsNotExpression(nowReading)) {
+			return parseNotExpression();
+		}
 		return parseLiteral();
 	}
 	private boolean startsAtomicExpression(Token token) {
-		return startsLiteral(token) || startsBracketExpression(token) || startsCastingExpression(token);
+		return startsLiteral(token) || startsBracketExpression(token) || startsCastingExpression(token) || startsNotExpression(token);
 	}
 	// BRACKETS 
 	private ParseNode parseBracketExpression() {
@@ -497,7 +527,7 @@ public class Parser {
 	private boolean startsStringConstant(Token token) {
 		return token instanceof StringToken;
 	}
-
+	
 	private void readToken() {
 		previouslyRead = nowReading;
 		nowReading = scanner.next();

@@ -105,6 +105,9 @@ public class FunctionSignature {
 		case EQUAL:		return FunctionSignatures.signaturesOf(Punctuator.EQUAL).acceptingSignature(TypeList);
 		case NOTEQUAL:	return FunctionSignatures.signaturesOf(Punctuator.NOTEQUAL).acceptingSignature(TypeList);
 		case CAST:		return FunctionSignatures.signaturesOf(Punctuator.CAST).acceptingSignature(TypeList);
+		case AND:		return FunctionSignatures.signaturesOf(Punctuator.AND).acceptingSignature(TypeList);
+		case OR:		return FunctionSignatures.signaturesOf(Punctuator.OR).acceptingSignature(TypeList);
+		case NOT:		return FunctionSignatures.signaturesOf(Punctuator.NOT).acceptingSignature(TypeList);
 
 		default:
 			return neverMatchedSignature;
