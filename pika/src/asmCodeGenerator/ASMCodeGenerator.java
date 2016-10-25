@@ -684,6 +684,7 @@ public class ASMCodeGenerator {
 			code.add(PushI, 0);
 			code.add(Jump, joinLabel);
 			code.add(Label, joinLabel);
+			
 		}
 		private void visitOrOperatorNode(BinaryOperatorNode node, Lextant operator) {
 			ASMCodeFragment arg1 = removeValueCode(node.child(0));
