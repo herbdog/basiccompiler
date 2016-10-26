@@ -321,6 +321,27 @@ public class ASMCodeGenerator {
 				code.add(Label, endLabel);
 			}
 		}
+		
+		public void visitLeave(WhileNode node) {
+			newVoidCode(node);
+			ASMCodeFragment exprval = removeValueCode(node.child(0));
+			ASMCodeFragment block = removeVoidCode(node.child(1));
+			
+			Labeller label = new Labeller("while");
+			
+			String startLabel = label.newLabel("start");
+			String blockLabel = label.newLabel("block");
+			String endLabel = label.newLabel("end");
+			
+			code.add(Label, startLabel);
+			code.append(exprval);
+			code.add(JumpFalse, endLabel);
+			code.add(Label, blockLabel);
+			code.append(block);
+			code.add(Jump, startLabel);
+			
+			code.add(Label, endLabel);
+		}
 		///////////////////////////////////////////////////////////////////////////
 		// expressions
 		public void visitLeave(BinaryOperatorNode node) {

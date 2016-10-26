@@ -117,6 +117,9 @@ public class Parser {
 		if(startsIf(nowReading)) {
 			return parseIf();
 		}
+		if(startsWhile(nowReading)) {
+			return parseWhile();
+		}
 		if(startsPrintStatement(nowReading)) {
 			return parsePrintStatement();
 		}
@@ -124,7 +127,7 @@ public class Parser {
 	}
 	private boolean startsStatement(Token token) {
 		return startsPrintStatement(token) ||
-			   startsDeclaration(token) || startsBlock(token) || startsAssign(token) || startsIf(token);
+			   startsDeclaration(token) || startsBlock(token) || startsAssign(token) || startsIf(token) || startsWhile(token);
 	}
 	// printStmt -> PRINT printExpressionList .
 	private ParseNode parsePrintStatement() {
@@ -271,6 +274,26 @@ public class Parser {
 		return (token.isLextant(Keyword.IF));
 	}
 	
+	//while statements
+	private ParseNode parseWhile() {
+		if (!startsWhile(nowReading)) {
+			return syntaxErrorNode("while");
+		}
+		Token whiletoken = nowReading;
+		readToken();
+		expect(Punctuator.OPEN_BRACKET);
+		ParseNode expression = parseExpression();
+		expect(Punctuator.CLOSE_BRACKET);
+		if (!nowReading.isLextant(Punctuator.OPEN_BRACE)) {
+			return syntaxErrorNode("if");
+		}
+		ParseNode blockstmt = parseBlock();
+		
+		return WhileNode.withChildren(whiletoken, expression, blockstmt);
+	}
+	private boolean startsWhile(Token token) {
+		return (token.isLextant(Keyword.WHILE));
+	}
 	// starting keywords for types
 	
 	///////////////////////////////////////////////////////////

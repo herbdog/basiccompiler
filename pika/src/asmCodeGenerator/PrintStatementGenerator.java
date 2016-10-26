@@ -32,7 +32,6 @@ public class PrintStatementGenerator {
 		this.code = code;
 		this.visitor = visitor;
 		this.stringlist = stringlist;
-		System.out.print(stringlist);
 	}
 
 	public void generate(PrintStatementNode node) {

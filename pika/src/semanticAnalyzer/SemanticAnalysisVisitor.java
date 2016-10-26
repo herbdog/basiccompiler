@@ -98,6 +98,10 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 	public void visitLeave(IfNode node) {
 		assert node.child(0).getType() == PrimitiveType.BOOLEAN;
 	}
+	
+	public void visitLeave(WhileNode node) {
+		assert node.child(0).getType() == PrimitiveType.BOOLEAN;
+	}
 	///////////////////////////////////////////////////////////////////////////
 	// expressions
 	@Override
