@@ -2,6 +2,7 @@ package semanticAnalyzer.signatures;
 
 import java.util.List;
 
+import semanticAnalyzer.types.TypeLiteral;
 import semanticAnalyzer.types.PrimitiveType;
 import semanticAnalyzer.types.Type;
 import lexicalAnalyzer.Lextant;

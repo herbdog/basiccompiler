@@ -12,6 +12,7 @@ import parseTree.nodeTypes.*;
 import semanticAnalyzer.signatures.FunctionSignature;
 import semanticAnalyzer.types.PrimitiveType;
 import semanticAnalyzer.types.Type;
+import semanticAnalyzer.types.TypeLiteral;
 import symbolTable.Binding;
 import symbolTable.Scope;
 import tokens.LextantToken;
@@ -118,7 +119,7 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 					for (int i = 0; i < globalnode.getChildren().size(); i++) {
 						ParseNode localnode = globalnode.child(i);
 						if ((localnode.getScope() == node.getScope()) && (localnode.toString().contains(Decnode)) && (localnode.toString().contains(identifiernode)) && (localnode.toString().contains(variablename))) {
-							logError("identifier declared as const may not be reassigned");
+							logError("identifier declared as const may not be casted");
 						}
 					}
 				}
@@ -199,19 +200,19 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 	}
 	public void visit(TypeNode node) {
 		if(node.getToken().isLextant(Keyword.INT)) {
-			node.setType(PrimitiveType.INTEGER);
+			node.setType(TypeLiteral.INT);
 		}
 		if(node.getToken().isLextant(Keyword.FLOAT)) {
-			node.setType(PrimitiveType.FLOAT);
+			node.setType(TypeLiteral.FLOAT);
 		}
 		if(node.getToken().isLextant(Keyword.CHAR)) {
-			node.setType(PrimitiveType.CHAR);
+			node.setType(TypeLiteral.CHAR);
 		}
 		if(node.getToken().isLextant(Keyword.STRING)) {
-			node.setType(PrimitiveType.STRING);
+			node.setType(TypeLiteral.STRING);
 		}
 		if(node.getToken().isLextant(Keyword.BOOL)) {
-			node.setType(PrimitiveType.BOOLEAN);
+			node.setType(TypeLiteral.BOOL);
 		}
 	}
 
