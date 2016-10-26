@@ -109,6 +109,21 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		assert node.nChildren() == 2;
 		ParseNode left  = node.child(0);
 		ParseNode right = node.child(1);
+		if (node.toString().contains("CAST")) {
+			if (left.toString().contains("Identifier")) {
+				CharSequence Decnode = "DeclarationNode (CONST)";
+				CharSequence identifiernode = "IdentifierNode";
+				CharSequence variablename = node.child(0).getToken().getLexeme();
+				for (ParseNode globalnode : node.pathToRoot()) {
+					for (int i = 0; i < globalnode.getChildren().size(); i++) {
+						ParseNode localnode = globalnode.child(i);
+						if ((localnode.getScope() == node.getScope()) && (localnode.toString().contains(Decnode)) && (localnode.toString().contains(identifiernode)) && (localnode.toString().contains(variablename))) {
+							logError("identifier declared as const may not be reassigned");
+						}
+					}
+				}
+			}
+		}
 		
 		List<Type> childTypes = Arrays.asList(left.getType(), right.getType());
 		
