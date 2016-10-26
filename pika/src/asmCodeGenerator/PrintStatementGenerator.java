@@ -6,7 +6,8 @@ import static asmCodeGenerator.codeStorage.ASMOpcode.Label;
 import static asmCodeGenerator.codeStorage.ASMOpcode.Printf;
 import static asmCodeGenerator.codeStorage.ASMOpcode.PushD;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Set;
 
 import parseTree.ParseNode;
 import parseTree.nodeTypes.NewlineNode;
@@ -23,14 +24,15 @@ import asmCodeGenerator.runtime.RunTime;
 public class PrintStatementGenerator {
 	ASMCodeFragment code;
 	ASMCodeGenerator.CodeVisitor visitor;
-	public List<String> stringlist;
+	public HashMap<String,String> stringlist;
 	
 	
-	public PrintStatementGenerator(ASMCodeFragment code, CodeVisitor visitor, List<String> stringlist) {
+	public PrintStatementGenerator(ASMCodeFragment code, CodeVisitor visitor, HashMap<String,String> stringlist) {
 		super();
 		this.code = code;
 		this.visitor = visitor;
 		this.stringlist = stringlist;
+		System.out.print(stringlist);
 	}
 
 	public void generate(PrintStatementNode node) {
@@ -78,27 +80,29 @@ public class PrintStatementGenerator {
 	
 	private String printString(ParseNode node) {
 		String format = null;
-		int iterator = stringlist.size();
-		iter:
-		for (int i = stringlist.size()-1; i > 0; i--) {
-			if(stringlist.get(i).toString().contains(node.getToken().getLexeme().replaceAll("\"",""))) {
-				break iter;
-			}
-			if(node.toString().contains("CAST")) {
+		String key = null;
+		Set<String> keyset = stringlist.keySet();
+		if(node.toString().contains("CAST")) {
+			iter:
+			for (String keys : keyset) {
 				ParseNode tempnode = node.child(0);
 				while(!tempnode.getChildren().isEmpty()) {
-					if(stringlist.get(i).contains(tempnode.getToken().getLexeme().replaceAll("\"", ""))) {
+					if(keys.contains(tempnode.getToken().getLexeme().replaceAll("\"", ""))) {
+						key = keys;
 						break iter;
 					}
 					tempnode = tempnode.child(0);
 				}
-				if(stringlist.get(i).contains(tempnode.getToken().getLexeme().replaceAll("\"", ""))) {
+				if(keys.contains(tempnode.getToken().getLexeme().replaceAll("\"", ""))) {
+					key = keys;
 					break iter;
 				}
 			}
-			iterator--;
+			format = stringlist.get(key);
 		}
-		format = "-StringConstant-" + iterator + "-";
+		else {
+			format = stringlist.get(node.getToken().getLexeme().replaceAll("\"", ""));
+		}
 		return format;
 	}
 

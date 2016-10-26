@@ -114,6 +114,9 @@ public class Parser {
 		if(startsAssign(nowReading)) {
 			return parseAssign();
 		}
+		if(startsIf(nowReading)) {
+			return parseIf();
+		}
 		if(startsPrintStatement(nowReading)) {
 			return parsePrintStatement();
 		}
@@ -121,7 +124,7 @@ public class Parser {
 	}
 	private boolean startsStatement(Token token) {
 		return startsPrintStatement(token) ||
-			   startsDeclaration(token) || startsBlock(token) || startsAssign(token);
+			   startsDeclaration(token) || startsBlock(token) || startsAssign(token) || startsIf(token);
 	}
 	// printStmt -> PRINT printExpressionList .
 	private ParseNode parsePrintStatement() {
@@ -241,6 +244,33 @@ public class Parser {
 	private boolean startsAssign(Token token) {
 		return (token instanceof IdentifierToken);
 	}
+	
+	//if statements 
+	private ParseNode parseIf() {
+		if (!startsIf(nowReading)) {
+			return syntaxErrorNode("if");
+		}
+		Token iftoken = nowReading;
+		readToken();
+		expect(Punctuator.OPEN_BRACKET);
+		ParseNode expression = parseExpression();
+		expect(Punctuator.CLOSE_BRACKET);
+		if (!nowReading.isLextant(Punctuator.OPEN_BRACE)) {
+			return syntaxErrorNode("if");
+		}
+		ParseNode blockstmt = parseBlock();
+
+		if (nowReading.isLextant(Keyword.ELSE)) {
+			readToken();
+			ParseNode elsenode = parseBlock();
+			return IfNode.withChildren(iftoken, expression, blockstmt, elsenode);
+		}
+		return IfNode.withChildren(iftoken, expression, blockstmt);
+	}
+	private boolean startsIf(Token token) {
+		return (token.isLextant(Keyword.IF));
+	}
+	
 	// starting keywords for types
 	
 	///////////////////////////////////////////////////////////

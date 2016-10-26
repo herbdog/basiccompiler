@@ -2,7 +2,6 @@ package asmCodeGenerator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import asmCodeGenerator.codeStorage.ASMCodeFragment;
@@ -22,7 +21,7 @@ import static asmCodeGenerator.codeStorage.ASMOpcode.*;
 // do not call the code generator if any errors have occurred during analysis.
 public class ASMCodeGenerator {
 	ParseNode root;
-	public List<String> stringlist;
+	public HashMap<String,String> stringlist;
 
 	public static ASMCodeFragment generate(ParseNode syntaxTree) {
 		ASMCodeGenerator codeGenerator = new ASMCodeGenerator(syntaxTree);
@@ -31,7 +30,7 @@ public class ASMCodeGenerator {
 	public ASMCodeGenerator(ParseNode root) {
 		super();
 		this.root = root;
-		stringlist = new ArrayList<String>();
+		stringlist = new HashMap<String,String>();
 	}
 	
 	public ASMCodeFragment makeASM() {
@@ -213,14 +212,17 @@ public class ASMCodeGenerator {
 			ASMCodeFragment rvalue = removeValueCode(node.child(1));
 			if(node.child(1).getType() == PrimitiveType.STRING) {
 				if(node.child(1).getToken().toString().contains("CAST")) {
-					String temp = stringlist.get(stringlist.size()-1);
-					String temp2 = node.child(0).getToken().getLexeme().toString();
-					stringlist.remove(stringlist.size()-1);
-					stringlist.add(temp.concat(temp2));
+					ParseNode tempnode = node.child(1);
+					while(!tempnode.getChildren().isEmpty()) {
+						tempnode = tempnode.child(0);
+					}
+					String label = stringlist.get(tempnode.getToken().getLexeme().replaceAll("\"", ""));
+					stringlist.put(node.child(0).getToken().getLexeme().toString(), label);
 				}
 				else {
-					stringlist.remove(stringlist.size()-1);
-					stringlist.add(node.child(0).getToken().getLexeme());
+					String label = stringlist.get(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
+					stringlist.remove(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
+					stringlist.put(node.child(0).getToken().getLexeme(),label);
 				}
 			}
 		
@@ -257,12 +259,14 @@ public class ASMCodeGenerator {
 				if(node.child(1).getToken().toString().contains("CAST")) {
 					String temp = stringlist.get(stringlist.size()-1);
 					String temp2 = node.child(0).getToken().getLexeme().toString();
-					stringlist.remove(stringlist.size()-1);
-					stringlist.add(temp.concat(temp2));
+					String label = stringlist.get(temp);
+					stringlist.remove(temp);
+					stringlist.put(temp.concat(temp2), label);
 				}
 				else {
-					stringlist.remove(stringlist.size()-1);
-					stringlist.add(node.child(0).getToken().getLexeme());
+					String label = stringlist.get(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
+					stringlist.remove(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
+					stringlist.put(node.child(0).getToken().getLexeme(),label);
 				}
 			}
 			
@@ -273,6 +277,50 @@ public class ASMCodeGenerator {
 			code.add(opcodeForStore(type));
 		}
 		
+		public void visitLeave(IfNode node) {
+			if (node.getChildren().size() == 2) {
+				newVoidCode(node);
+				ASMCodeFragment exprval = removeValueCode(node.child(0));
+				ASMCodeFragment block = removeVoidCode(node.child(1));
+				Labeller label = new Labeller("if");
+				
+				String startLabel = label.newLabel("start");
+				String blockLabel = label.newLabel("block");
+				String endLabel = label.newLabel("end");
+				
+				code.add(Label, startLabel);
+				code.append(exprval);
+				code.add(JumpFalse, endLabel);
+				code.add(Label, blockLabel);
+				code.append(block);
+			
+				code.add(Label, endLabel);
+			}
+			else {
+				newVoidCode(node);
+				ASMCodeFragment exprval = removeValueCode(node.child(0));
+				ASMCodeFragment block = removeVoidCode(node.child(1));
+				ASMCodeFragment elseblock = removeVoidCode(node.child(2));
+				Labeller label = new Labeller("if");
+				
+				String startLabel = label.newLabel("start");
+				String blockLabel = label.newLabel("block");
+				String elseLabel = label.newLabel("else");
+				String endLabel = label.newLabel("end");
+				
+				code.add(Label, startLabel);
+				code.append(exprval);
+				code.add(JumpFalse, elseLabel);
+				code.add(Label, blockLabel);
+				code.append(block);
+				code.add(Jump, endLabel);
+				
+				code.add(Label, elseLabel);
+				code.append(elseblock);
+				code.add(Jump, endLabel);
+				code.add(Label, endLabel);
+			}
+		}
 		///////////////////////////////////////////////////////////////////////////
 		// expressions
 		public void visitLeave(BinaryOperatorNode node) {
@@ -782,7 +830,7 @@ public class ASMCodeGenerator {
 			newAddressCode(node);
 			newValueCode(node);
 			Labeller label = new Labeller("StringConstant");
-			stringlist.add(node.getValue());
+			stringlist.put(node.getValue(), label.newLabel(""));
 			code.add(DLabel, label.newLabel(""));
 			code.add(DataS, node.getValue());
 		}

@@ -23,6 +23,9 @@ public interface ParseNodeVisitor {
 	
 	void visitEnter(AssignNode node);
 	void visitLeave(AssignNode node);
+	
+	void visitEnter(IfNode node);
+	void visitLeave(IfNode node);
 
 	void visitEnter(ParseNode node);
 	void visitLeave(ParseNode node);
@@ -82,6 +85,12 @@ public interface ParseNodeVisitor {
 			defaultVisitEnter(node);
 		}
 		public void visitLeave(AssignNode node) {
+			defaultVisitLeave(node);
+		}
+		public void visitEnter(IfNode node) {
+			defaultVisitEnter(node);
+		}
+		public void visitLeave(IfNode node) {
 			defaultVisitLeave(node);
 		}
 		public void visitEnter(MainBlockNode node) {
