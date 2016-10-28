@@ -1,6 +1,5 @@
 package asmCodeGenerator;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -144,6 +143,14 @@ public class ASMCodeGenerator {
 			else if(node.getType() == PrimitiveType.CHAR) {
 				code.add(LoadC);
 			}
+			else if(node.getType() == PrimitiveType.RATIONAL) {
+				code.add(Duplicate);
+				code.add(PushI, 4);
+				code.add(Add);
+				code.add(LoadI);
+				code.add(Exchange);
+				code.add(LoadI);
+			}
 			else {
 				assert false : "node " + node;
 			}
@@ -210,26 +217,44 @@ public class ASMCodeGenerator {
 			newVoidCode(node);
 			ASMCodeFragment lvalue = removeAddressCode(node.child(0));	
 			ASMCodeFragment rvalue = removeValueCode(node.child(1));
-			if(node.child(1).getType() == PrimitiveType.STRING) {
-				if(node.child(1).getToken().toString().contains("CAST")) {
-					ParseNode tempnode = node.child(1);
-					while(!tempnode.getChildren().isEmpty()) {
-						tempnode = tempnode.child(0);
-					}
-					String label = stringlist.get(tempnode.getToken().getLexeme().replaceAll("\"", ""));
-					stringlist.put(node.child(0).getToken().getLexeme().toString(), label);
-				}
-				else {
-					String label = stringlist.get(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
-					stringlist.remove(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
-					stringlist.put(node.child(0).getToken().getLexeme(),label);
-				}
+			if(node.child(1).getType() == PrimitiveType.RATIONAL) {
+				code.append(lvalue);
+				code.add(Duplicate);
+				code.add(PushI, 4);
+				code.add(Add);
+				code.append(rvalue);
+				code.add(Duplicate);
+				code.add(PushI, 11000);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(Pop);
+				code.add(StoreI);
+				code.add(PushI, 11000);
+				code.add(LoadI);
+				code.add(StoreI);
 			}
-		
-			code.append(lvalue);
-			code.append(rvalue);
-			Type type = node.getType();
-			code.add(opcodeForStore(type));
+			else {
+				if(node.child(1).getType() == PrimitiveType.STRING) {
+					if(node.child(1).getToken().toString().contains("CAST")) {
+						ParseNode tempnode = node.child(1);
+						while(!tempnode.getChildren().isEmpty()) {
+							tempnode = tempnode.child(0);
+						}
+						String label = stringlist.get(tempnode.getToken().getLexeme().replaceAll("\"", ""));
+						stringlist.put(node.child(0).getToken().getLexeme().toString(), label);
+					}
+					else {
+						String label = stringlist.get(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
+						stringlist.remove(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
+						stringlist.put(node.child(0).getToken().getLexeme(),label);
+					}
+				}
+			
+				code.append(lvalue);
+				code.append(rvalue);
+				Type type = node.getType();
+				code.add(opcodeForStore(type));
+			}
 		}
 		private ASMOpcode opcodeForStore(Type type) {
 			if(type == PrimitiveType.INTEGER) {
@@ -255,26 +280,44 @@ public class ASMCodeGenerator {
 			newVoidCode(node);
 			ASMCodeFragment lvalue = removeAddressCode(node.child(0));
 			ASMCodeFragment rvalue = removeValueCode(node.child(1));
-			if(node.child(1).getType() == PrimitiveType.STRING) {
-				if(node.child(1).getToken().toString().contains("CAST")) {
-					String temp = stringlist.get(stringlist.size()-1);
-					String temp2 = node.child(0).getToken().getLexeme().toString();
-					String label = stringlist.get(temp);
-					stringlist.remove(temp);
-					stringlist.put(temp.concat(temp2), label);
-				}
-				else {
-					String label = stringlist.get(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
-					stringlist.remove(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
-					stringlist.put(node.child(0).getToken().getLexeme(),label);
-				}
+			if(node.child(1).getType() == PrimitiveType.RATIONAL) {
+				code.append(lvalue);
+				code.add(Duplicate);
+				code.add(PushI, 4);
+				code.add(Add);
+				code.append(rvalue);
+				code.add(Duplicate);
+				code.add(PushI, 11000);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(Pop);
+				code.add(StoreI);
+				code.add(PushI, 11000);
+				code.add(LoadI);
+				code.add(StoreI);
 			}
-			
-			
-			code.append(lvalue);
-			code.append(rvalue);
-			Type type = node.child(1).getType();
-			code.add(opcodeForStore(type));
+			else {
+				if(node.child(1).getType() == PrimitiveType.STRING) {
+					if(node.child(1).getToken().toString().contains("CAST")) {
+						String temp = stringlist.get(stringlist.size()-1);
+						String temp2 = node.child(0).getToken().getLexeme().toString();
+						String label = stringlist.get(temp);
+						stringlist.remove(temp);
+						stringlist.put(temp.concat(temp2), label);
+					}
+					else {
+						String label = stringlist.get(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
+						stringlist.remove(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
+						stringlist.put(node.child(0).getToken().getLexeme(),label);
+					}
+				}
+				
+				
+				code.append(lvalue);
+				code.append(rvalue);
+				Type type = node.child(1).getType();
+				code.add(opcodeForStore(type));
+			}
 		}
 		
 		public void visitLeave(IfNode node) {
@@ -792,6 +835,8 @@ public class ASMCodeGenerator {
 			code.append(arg1);
 			code.append(arg2);
 			
+		
+			
 			ASMOpcode opcode = opcodeForOperator(node.getOperator(),arg1type,arg2type);
 			code.add(opcode);							// type-dependent! (opcode is different for floats and for ints)
 		}
@@ -804,27 +849,249 @@ public class ASMCodeGenerator {
 				return Add;	
 			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT))
 				return FAdd;
+			if ((arg1 == PrimitiveType.RATIONAL) && (arg2 == PrimitiveType.RATIONAL)) {
+				rationaladd();
+				lowestterms();
+				return Nop;
+			}
 			case SUBTRACT:
 			if ((arg1 == PrimitiveType.INTEGER) && (arg2 == PrimitiveType.INTEGER))
 				return Subtract;	
 			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT))
 				return FSubtract;
+			if ((arg1 == PrimitiveType.RATIONAL) && (arg2 == PrimitiveType.RATIONAL)) {
+				rationalsub();
+				lowestterms();
+				return Nop;
+			}
 			case MULTIPLY: 
 			if ((arg1 == PrimitiveType.INTEGER) && (arg2 == PrimitiveType.INTEGER))
 				return Multiply;	
 			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT))
 				return FMultiply;
+			if ((arg1 == PrimitiveType.RATIONAL) && (arg2 == PrimitiveType.RATIONAL)) {
+				rationalmul();
+				lowestterms();
+				return Nop;
+			}
 			case DIVIDE: 
 			if ((arg1 == PrimitiveType.INTEGER) && (arg2 == PrimitiveType.INTEGER))
 				return Divide;	
 			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT))
 				return FDivide;
+			if ((arg1 == PrimitiveType.RATIONAL) && (arg2 == PrimitiveType.RATIONAL)) {
+				rationaldiv();
+				lowestterms();
+				return Nop;
+			}
+			case OVER:
+				lowestterms();
+				return Nop;
+			case EXPRESS_OVER:
+			if (arg1 == PrimitiveType.RATIONAL)
+				ratexpressover();
+			if (arg1 == PrimitiveType.FLOAT)
+				floatexpressover();
+				return Nop;
+			case RATIONALIZE:
+			if (arg1 == PrimitiveType.RATIONAL) {
+				rationalizerat();
+				lowestterms();
+			}
+			if (arg1 == PrimitiveType.FLOAT) {
+				rationalizefloat();
+				lowestterms();
+			}
+				return Nop;
 			default:
 				assert false : "unimplemented operator in opcodeForOperator";
 			}
 			return null;
 		}
+		
+		private void rationaladd() {
+			
+			code.add(Duplicate);
+			code.add(PushI, 40000);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(Exchange);
+			code.add(Duplicate);
+			code.add(PushI, 40004);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(Pop);
+			code.add(Pop);
+			code.add(Duplicate);
+			code.add(PushI, 40008);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(PushI, 40004);
+			code.add(LoadI);
+			code.add(Multiply);
+			code.add(Exchange);
+			code.add(PushI, 40000);
+			code.add(LoadI);
+			code.add(Multiply);
+			code.add(Add);
+			code.add(PushI, 40000);
+			code.add(LoadI);
+			code.add(PushI, 40008);
+			code.add(LoadI);
+			code.add(Multiply);
+			
+		}
+		
+		private void rationalsub() {
+			
+			code.add(Duplicate);
+			code.add(PushI, 40000);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(Exchange);
+			code.add(Duplicate);
+			code.add(PushI, 40004);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(Pop);
+			code.add(Pop);
+			code.add(Duplicate);
+			code.add(PushI, 40008);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(PushI, 40004);
+			code.add(LoadI);
+			code.add(Multiply);
+			code.add(Exchange);
+			code.add(PushI, 40000);
+			code.add(LoadI);
+			code.add(Multiply);
+			code.add(Exchange);
+			code.add(Subtract);
+			code.add(PushI, 40000);
+			code.add(LoadI);
+			code.add(PushI, 40008);
+			code.add(LoadI);
+			code.add(Multiply);
+		}
+		
+		private void rationalmul() {
+			
+			code.add(Exchange);
+			code.add(PushI, 40004);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(Multiply);
+			code.add(Exchange);
+			code.add(PushI, 40004);
+			code.add(LoadI);
+			code.add(Multiply);
+			code.add(Exchange);
+			
+		}
+		
+		private void rationaldiv() {
+			
+			code.add(PushI, 40004);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(Multiply);
+			code.add(Exchange);
+			code.add(PushI, 40004);
+			code.add(LoadI);
+			code.add(Multiply);
+			code.add(Exchange);
+			
+		}
+		
+		private void lowestterms() {
+			Labeller label = new Labeller("gcd");
+			String whileloop = label.newLabel("whileloop");
+			String lowerterms = label.newLabel("lower");
+			
+			code.add(Duplicate);
+			code.add(PushI, 20000);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(Exchange);
+			code.add(Duplicate);
+			code.add(PushI, 20004);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(Exchange);
+			code.add(Exchange);
+			code.add(Jump, whileloop);
 
+			code.add(Label, whileloop);
+			code.add(Exchange);
+			code.add(Duplicate);
+			code.add(PushI, 19996);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(Remainder);
+			code.add(Duplicate);
+			code.add(PushI, 19996);
+			code.add(LoadI);
+			code.add(Exchange);
+			code.add(JumpTrue, whileloop);
+			code.add(Jump, lowerterms);
+			
+			code.add(Label, lowerterms);
+			code.add(Exchange);
+			code.add(Pop);
+			code.add(PushI, 20004);
+			code.add(LoadI);
+			code.add(Exchange);
+			code.add(Divide);
+			code.add(PushI, 20000);
+			code.add(LoadI);
+			code.add(PushI, 19996);
+			code.add(LoadI);
+			code.add(Divide);
+		}
+
+		private void ratexpressover() {
+			
+			code.add(PushI, 30000);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(Exchange);
+			code.add(PushI, 30000);
+			code.add(LoadI);
+			code.add(Multiply);
+			code.add(Exchange);
+			code.add(Divide);
+			
+		}
+		
+		private void floatexpressover() {
+			
+			code.add(ConvertF);
+			code.add(FMultiply);
+			code.add(ConvertI);
+			
+		}
+		
+		private void rationalizerat() {
+			
+			ratexpressover();
+			code.add(PushI, 30000);
+			code.add(LoadI);
+			
+		}
+		
+		private void rationalizefloat() {
+			
+			code.add(Duplicate);
+			code.add(PushI, 30000);
+			code.add(Exchange);
+			code.add(StoreI);
+			floatexpressover();
+			code.add(PushI, 30000);
+			code.add(LoadI);
+			
+		}
+		
 		///////////////////////////////////////////////////////////////////////////
 		// leaf nodes (ErrorNode not necessary)
 		public void visit(BooleanConstantNode node) {

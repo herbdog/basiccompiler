@@ -99,6 +99,9 @@ public class FunctionSignature {
 		case SUBTRACT:	return FunctionSignatures.signaturesOf(Punctuator.SUBTRACT).acceptingSignature(TypeList);
 		case MULTIPLY:	return FunctionSignatures.signaturesOf(Punctuator.MULTIPLY).acceptingSignature(TypeList);
 		case DIVIDE:	return FunctionSignatures.signaturesOf(Punctuator.DIVIDE).acceptingSignature(TypeList);
+		case OVER:		return FunctionSignatures.signaturesOf(Punctuator.OVER).acceptingSignature(TypeList);
+		case EXPRESS_OVER:	return FunctionSignatures.signaturesOf(Punctuator.EXPRESS_OVER).acceptingSignature(TypeList);
+		case RATIONALIZE:	return FunctionSignatures.signaturesOf(Punctuator.RATIONALIZE).acceptingSignature(TypeList);
 		case GREATER:	return FunctionSignatures.signaturesOf(Punctuator.GREATER).acceptingSignature(TypeList);
 		case GREATER_EQUAL:	return FunctionSignatures.signaturesOf(Punctuator.GREATER_EQUAL).acceptingSignature(TypeList);
 		case LESS:		return FunctionSignatures.signaturesOf(Punctuator.LESS).acceptingSignature(TypeList);

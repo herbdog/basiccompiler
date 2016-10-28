@@ -1,11 +1,6 @@
 package asmCodeGenerator;
 
-import static asmCodeGenerator.codeStorage.ASMOpcode.Jump;
-import static asmCodeGenerator.codeStorage.ASMOpcode.JumpTrue;
-import static asmCodeGenerator.codeStorage.ASMOpcode.Label;
-import static asmCodeGenerator.codeStorage.ASMOpcode.Printf;
-import static asmCodeGenerator.codeStorage.ASMOpcode.PushD;
-
+import static asmCodeGenerator.codeStorage.ASMOpcode.*;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -20,6 +15,7 @@ import asmCodeGenerator.ASMCodeGenerator.CodeVisitor;
 import asmCodeGenerator.codeStorage.ASMCodeFragment;
 import asmCodeGenerator.ASMCodeGenerator;
 import asmCodeGenerator.runtime.RunTime;
+
 
 public class PrintStatementGenerator {
 	ASMCodeFragment code;
@@ -50,6 +46,10 @@ public class PrintStatementGenerator {
 		String format = null;
 		if (node.getType() == PrimitiveType.STRING) {
 			format = printString(node);
+		}
+		if (node.getType() == PrimitiveType.RATIONAL) {
+			printRational(node);
+			return;
 		}
 		else {
 			format = printFormat(node.getType());
@@ -104,6 +104,134 @@ public class PrintStatementGenerator {
 		}
 		return format;
 	}
+	
+	private void printRational(ParseNode node) {
+		Labeller label = new Labeller("rational");
+		String sign = label.newLabel("sign");
+		String negpart = label.newLabel("negative");
+		String division = label.newLabel("division");
+		String negatequot = label.newLabel("negatequotient");
+		String quot2 = label.newLabel("quot2");
+		String zeroremainder = label.newLabel("zeroremainder");
+		String fractionpart = label.newLabel("fraction");
+		String quotientpart = label.newLabel("quotient");
+		String negremainder = label.newLabel("negativeremainder");
+		String printremainder = label.newLabel("printremainder");
+		String negdenom = label.newLabel("negativedenominator");
+		String printdenom = label.newLabel("printdenom");
+		String endlabel = label.newLabel("endlabel");
+		
+		code.add(PushI, 9997);
+		code.add(PushI, 45);
+		code.add(StoreC);
+		code.add(PushI, 9998);
+		code.add(PushI, 95);
+		code.add(StoreC);
+		code.add(PushI, 9999);
+		code.add(PushI, 47);
+		code.add(StoreC);
+		
+		code.append(visitor.removeValueCode(node));
+		code.add(Duplicate);
+		code.add(PushI, 10000);
+		code.add(Exchange);
+		code.add(StoreI);
+		code.add(Exchange);
+		code.add(Duplicate);
+		code.add(PushI, 10004);
+		code.add(Exchange);
+		code.add(StoreI);
+		code.add(Exchange);
+		
+		code.add(JumpNeg, sign);
+		code.add(JumpNeg, negpart);
+		code.add(Jump, division);
+		
+		code.add(Label, sign);
+		code.add(JumpPos, negpart);
+		code.add(Jump, division);
+		code.add(Label, negpart);
+		code.add(PushI, 9997);
+		code.add(LoadC);
+		code.add(PushD, RunTime.CHARACTER_PRINT_FORMAT);
+		code.add(Printf);
+		code.add(Jump, division);
+		
+		code.add(Label, division);
+		code.add(PushI, 10004);
+		code.add(LoadI);
+		code.add(PushI, 10000);
+		code.add(LoadI);
+		code.add(Divide);
+		code.add(Duplicate);
+		code.add(JumpNeg, negatequot);
+		code.add(Jump, quot2);
+		
+		code.add(Label, negatequot);
+		code.add(Negate);
+		code.add(Jump, quot2);
+		
+		code.add(Label, quot2);
+		code.add(Duplicate);
+		code.add(JumpFalse, zeroremainder);
+		code.add(Jump, quotientpart);
+		
+		code.add(Label, quotientpart);
+		code.add(PushD, RunTime.INTEGER_PRINT_FORMAT);
+		code.add(Printf);
+		code.add(Jump, zeroremainder);
+		
+		code.add(Label, zeroremainder);
+		code.add(PushI, 10004);
+		code.add(LoadI);
+		code.add(PushI, 10000);
+		code.add(LoadI);
+		code.add(Remainder);
+		code.add(JumpFalse, endlabel);
+		code.add(Jump, fractionpart);
+		
+		code.add(Label, fractionpart);
+		code.add(PushI, 9998);
+		code.add(LoadC);
+		code.add(PushD, RunTime.CHARACTER_PRINT_FORMAT);
+		code.add(Printf);
+		code.add(PushI, 10004);
+		code.add(LoadI);
+		code.add(PushI, 10000);
+		code.add(LoadI);
+		code.add(Remainder);
+		code.add(Duplicate);
+		code.add(JumpNeg, negremainder);
+		code.add(Jump, printremainder);
+		
+		code.add(Label, negremainder);
+		code.add(Negate);
+		code.add(Jump, printremainder);
+		
+		code.add(Label, printremainder);
+		code.add(PushD, RunTime.INTEGER_PRINT_FORMAT);
+		code.add(Printf);
+		code.add(PushI, 9999);
+		code.add(LoadC);
+		code.add(PushD, RunTime.CHARACTER_PRINT_FORMAT);
+		code.add(Printf);
+		code.add(PushI, 10000);
+		code.add(LoadI);
+		code.add(Duplicate);
+		code.add(JumpNeg, negdenom);
+		code.add(Jump, printdenom);
+		
+		code.add(Label, negdenom);
+		code.add(Negate);
+		code.add(Jump, printdenom);
+		
+		code.add(Label, printdenom);
+		code.add(PushD, RunTime.INTEGER_PRINT_FORMAT);
+		code.add(Printf);
+		code.add(Jump, endlabel);
+		
+		code.add(Label, endlabel);
+	}
 
 
 	private static String printFormat(Type type) {
@@ -111,6 +239,7 @@ public class PrintStatementGenerator {
 		
 		switch((PrimitiveType)type) {
 		case INTEGER:	return RunTime.INTEGER_PRINT_FORMAT;
+		case RATIONAL:	return RunTime.RATIONAL_PRINT_FORMAT;
 		case FLOAT:		return RunTime.FLOAT_PRINT_FORMAT;
 		case STRING:	return RunTime.STRING_PRINT_FORMAT;
 		case CHAR:		return RunTime.CHARACTER_PRINT_FORMAT;
