@@ -144,11 +144,14 @@ public class FunctionSignatures extends ArrayList<FunctionSignature> {
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.INTEGER, TypeLiteral.FLOAT, PrimitiveType.FLOAT),
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.INTEGER, TypeLiteral.BOOL, PrimitiveType.BOOLEAN),
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.INTEGER, TypeLiteral.INT, PrimitiveType.INTEGER),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.INTEGER, TypeLiteral.RAT, PrimitiveType.RATIONAL),
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.FLOAT, TypeLiteral.INT, PrimitiveType.INTEGER),
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.FLOAT, TypeLiteral.FLOAT, PrimitiveType.FLOAT),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.FLOAT, TypeLiteral.RAT, PrimitiveType.RATIONAL),
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.CHAR, TypeLiteral.INT, PrimitiveType.INTEGER),
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.CHAR, TypeLiteral.BOOL, PrimitiveType.BOOLEAN),
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.CHAR, TypeLiteral.CHAR, PrimitiveType.CHAR),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.CHAR, TypeLiteral.RAT, PrimitiveType.RATIONAL),
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.STRING, TypeLiteral.STRING, PrimitiveType.STRING),
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.BOOLEAN, TypeLiteral.BOOL, PrimitiveType.BOOLEAN)
 		);

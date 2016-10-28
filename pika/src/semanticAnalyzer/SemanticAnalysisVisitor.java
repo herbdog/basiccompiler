@@ -214,6 +214,9 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		if(node.getToken().isLextant(Keyword.BOOL)) {
 			node.setType(TypeLiteral.BOOL);
 		}
+		if(node.getToken().isLextant(Keyword.RAT)) {
+			node.setType(TypeLiteral.RAT);
+		}
 	}
 
 	///////////////////////////////////////////////////////////////////////////

@@ -770,6 +770,12 @@ public class ASMCodeGenerator {
 			newValueCode(node);
 			ASMCodeFragment arg1 = removeValueCode(node.child(0));
 			code.append(arg1);	
+			if(((node.child(0).getType() == PrimitiveType.INTEGER) || (node.child(0).getType() == PrimitiveType.CHAR)) && (node.child(1).getType() == TypeLiteral.RAT))
+				castrational();
+			if((node.child(0).getType() == PrimitiveType.FLOAT) && (node.child(1).getType() == TypeLiteral.RAT)) {
+				castfrational();
+				lowestterms();
+			}
 			if((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == TypeLiteral.FLOAT))
 				code.add(ConvertF);
 			if((node.child(0).getType() == PrimitiveType.FLOAT) && (node.child(1).getType() == TypeLiteral.INT))
@@ -1090,6 +1096,19 @@ public class ASMCodeGenerator {
 			floatexpressover();
 			code.add(PushI, 30000);
 			code.add(LoadI);
+			
+		}
+		
+		private void castrational() {
+			
+			code.add(PushI, 1);
+			
+		}
+		
+		private void castfrational() {
+			
+			code.add(PushI, 223092870);
+			rationalizefloat();
 			
 		}
 		

@@ -12,6 +12,7 @@ public enum Keyword implements Lextant {
 	STRING("string"),
 	CHAR("char"),
 	BOOL("bool"),
+	RAT("rat"),
 	PRINT("print"),
 	NEWLINE("_n_"),
 	TAB("_t_"),
