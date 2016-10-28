@@ -313,10 +313,10 @@ public class ASMCodeGenerator {
 					}
 				}
 				
-				
 				code.append(lvalue);
 				code.append(rvalue);
 				Type type = node.child(1).getType();
+				node.child(0).setType(type);
 				code.add(opcodeForStore(type));
 			}
 		}

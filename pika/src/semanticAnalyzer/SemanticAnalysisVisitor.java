@@ -90,7 +90,7 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 				}
 			}
 		}
-		if (node.child(0).getType() != node.child(1).getType()) {
+		if (node.child(0).getType() != (node.child(1).getType())) {
 			logError("Assign operator not defined for types [" + node.child(0).getType() + "," + node.child(1).getType() + "]");
 		}
 		
