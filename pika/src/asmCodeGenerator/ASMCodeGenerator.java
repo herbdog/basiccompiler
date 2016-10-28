@@ -12,6 +12,7 @@ import parseTree.*;
 import parseTree.nodeTypes.*;
 import semanticAnalyzer.types.PrimitiveType;
 import semanticAnalyzer.types.Type;
+import semanticAnalyzer.types.TypeLiteral;
 import symbolTable.Binding;
 import symbolTable.Scope;
 import static asmCodeGenerator.codeStorage.ASMCodeFragment.CodeType.*;
@@ -769,9 +770,9 @@ public class ASMCodeGenerator {
 			newValueCode(node);
 			ASMCodeFragment arg1 = removeValueCode(node.child(0));
 			code.append(arg1);	
-			if((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.FLOAT))
+			if((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == TypeLiteral.FLOAT))
 				code.add(ConvertF);
-			if((node.child(0).getType() == PrimitiveType.FLOAT) && (node.child(1).getType() == PrimitiveType.INTEGER))
+			if((node.child(0).getType() == PrimitiveType.FLOAT) && (node.child(1).getType() == TypeLiteral.INT))
 				code.add(ConvertI);
 		}
 		private void visitAndOperatorNode(BinaryOperatorNode node, Lextant operator) {
