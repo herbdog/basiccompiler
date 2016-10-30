@@ -47,14 +47,13 @@ public class PrintStatementGenerator {
 		if (node.getType() == PrimitiveType.STRING) {
 			format = printString(node);
 		}
-		if (node.getType() == PrimitiveType.RATIONAL) {
+		else if (node.getType() == PrimitiveType.RATIONAL) {
 			printRational(node);
 			return;
 		}
 		else {
 			format = printFormat(node.getType());
 		}
-		
 		code.append(visitor.removeValueCode(node));
 		convertToStringIfBoolean(node);
 		code.add(PushD, format);

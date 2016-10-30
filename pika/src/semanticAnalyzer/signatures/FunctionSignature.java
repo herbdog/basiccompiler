@@ -95,6 +95,7 @@ public class FunctionSignature {
 		Punctuator punctuator = (Punctuator)lextant;
 		
 		switch(punctuator) {
+		case ASSIGN:	return FunctionSignatures.signaturesOf(Punctuator.ASSIGN).acceptingSignature(TypeList);
 		case ADD:		return FunctionSignatures.signaturesOf(Punctuator.ADD).acceptingSignature(TypeList);
 		case SUBTRACT:	return FunctionSignatures.signaturesOf(Punctuator.SUBTRACT).acceptingSignature(TypeList);
 		case MULTIPLY:	return FunctionSignatures.signaturesOf(Punctuator.MULTIPLY).acceptingSignature(TypeList);

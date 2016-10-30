@@ -281,7 +281,8 @@ public class ASMCodeGenerator {
 			newVoidCode(node);
 			ASMCodeFragment lvalue = removeAddressCode(node.child(0));
 			ASMCodeFragment rvalue = removeValueCode(node.child(1));
-			if(node.child(1).getType() == PrimitiveType.RATIONAL) {
+			if ((node.child(1).getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("BinaryOperatorNode (OVER) RATIONAL"))) {
+				
 				code.append(lvalue);
 				code.add(Duplicate);
 				code.add(PushI, 4);
@@ -296,6 +297,65 @@ public class ASMCodeGenerator {
 				code.add(PushI, 11000);
 				code.add(LoadI);
 				code.add(StoreI);
+				
+			}
+			else if ((node.child(1).getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("IntegerConstantNode"))) {
+				
+				code.append(lvalue);
+				code.add(Duplicate);
+				code.add(PushI, 4);
+				code.add(Add);
+				code.append(rvalue);
+				code.add(PushI, 1);
+				code.add(Duplicate);
+				code.add(PushI, 11000);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(Pop);
+				code.add(StoreI);
+				code.add(PushI, 11000);
+				code.add(LoadI);
+				code.add(StoreI);
+				
+			}
+			else if ((node.child(1).getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("FloatConstantNode"))) {
+				
+				code.append(lvalue);
+				code.add(Duplicate);
+				code.add(PushI, 4);
+				code.add(Add);
+				code.append(rvalue);
+				code.add(ConvertI);
+				code.add(PushI, 1);
+				code.add(Duplicate);
+				code.add(PushI, 11000);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(Pop);
+				code.add(StoreI);
+				code.add(PushI, 11000);
+				code.add(LoadI);
+				code.add(StoreI);
+				
+			}
+			else if ((node.child(1).getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("CharacterConstantNode"))) {
+				
+				code.append(lvalue);
+				code.add(Duplicate);
+				code.add(PushI, 4);
+				code.add(Add);
+				code.append(rvalue);
+				code.add(PushI, 1);
+				code.add(Duplicate);
+				code.add(PushI, 11000);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(Pop);
+				code.add(StoreI);
+				code.add(PushI, 11000);
+				code.add(LoadI);
+				code.add(StoreI);
+				
 			}
 			else {
 				if(node.child(1).getType() == PrimitiveType.STRING) {
@@ -315,6 +375,35 @@ public class ASMCodeGenerator {
 				
 				code.append(lvalue);
 				code.append(rvalue);
+				if ((node.child(1).getType() == PrimitiveType.INTEGER) && (node.child(1).toString().contains("FloatConstantNode"))) {
+					code.add(ConvertI);
+				}
+				else if ((node.child(1).getType() == PrimitiveType.INTEGER) && (node.child(1).toString().contains("OVER"))) {
+					code.add(Divide);
+				}
+				else if ((node.child(1).getType() == PrimitiveType.INTEGER) && (node.child(1).toString().contains("CharacterConstantNode"))) {
+				}
+				else if ((node.child(1).getType() == PrimitiveType.FLOAT) && (node.child(1).toString().contains("OVER"))) {
+					code.add(ConvertF);
+					code.add(Exchange);
+					code.add(ConvertF);
+					code.add(Exchange);
+					code.add(FDivide);
+				}
+				else if ((node.child(1).getType() == PrimitiveType.FLOAT) && (node.child(1).toString().contains("IntegerConstantNode"))) {
+					code.add(ConvertF);
+				}
+				else if ((node.child(1).getType() == PrimitiveType.FLOAT) && (node.child(1).toString().contains("CharacterConstantNode"))) {
+					code.add(ConvertF);
+				}
+				else if ((node.child(1).getType() == PrimitiveType.CHAR) && (node.child(1).toString().contains("OVER"))) {
+					code.add(Divide);
+				}
+				else if ((node.child(1).getType() == PrimitiveType.CHAR) && (node.child(1).toString().contains("IntegerConstantNode"))) {
+				}
+				else if ((node.child(1).getType() == PrimitiveType.CHAR) && (node.child(1).toString().contains("FloatConstantNode"))) {
+					code.add(ConvertI);
+				}
 				Type type = node.child(1).getType();
 				node.child(0).setType(type);
 				code.add(opcodeForStore(type));
@@ -839,10 +928,102 @@ public class ASMCodeGenerator {
 			ASMCodeFragment arg2 = removeValueCode(node.child(1));
 			Type arg1type = node.child(0).getType();
 			Type arg2type = node.child(1).getType();
+			String arg1pred = node.child(0).toString().split("\n")[0];
+			String arg2pred = node.child(1).toString().split("\n")[0];
 			code.append(arg1);
-			code.append(arg2);
+			if (arg1type == PrimitiveType.INTEGER) {
+				if (arg1pred.contains("FloatConstantNode")) {
+					code.add(ConvertI);
+					code.append(arg2);
+					if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+						code.add(Divide);
+				}
+				else if (arg1pred.contains("CharacterConstantNode")) {
+					code.append(arg2);
+					if (arg2pred.contains("FloatConstantNode"))
+						code.add(ConvertI);
+					else if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+						code.add(Divide);
+				}
+				else if ((arg1pred.contains("BinaryOperatorNode (OVER)")) && (!node.getToken().isLextant(Punctuator.OVER))) {
+					code.add(Divide);
+					code.append(arg2);
+					if (arg2pred.contains("FloatConstantNode"))
+						code.add(ConvertI);
+				}
+				else if (node.child(0).nChildren() > 0) {
+					if (node.child(0).child(0).getType() == PrimitiveType.FLOAT) {
+						code.add(ConvertI);
+						code.append(arg2);
+						if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+							code.add(Divide);
+						else if (arg2pred.contains("FloatConstantNode"))
+							code.add(ConvertI);
+					}
+					else if (node.child(0).child(0).getType() == PrimitiveType.CHAR) {
+						code.append(arg2);
+						if (arg2pred.contains("FloatConstantNode"))
+							code.add(ConvertI);
+						else if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+							code.add(Divide);
+					}
+					else if (node.child(0).child(0).getType() == PrimitiveType.RATIONAL) {
+						code.add(Divide);
+						code.append(arg2);
+					}
+					else {
+						code.append(arg2);
+					}
+				}
+				else {
+					code.append(arg2);
+				}
+			}
+			else if (arg1type == PrimitiveType.FLOAT) {
+				if (node.child(0).nChildren() > 0) {
+					if (node.child(0).child(0).getType() == PrimitiveType.INTEGER) {
+						code.add(ConvertF);
+						code.append(arg2);
+						if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+							code.add(Divide);
+					}
+				}
+				else if ((arg1pred.contains("IntegerConstantNode"))) {
+					code.add(ConvertF);
+					code.append(arg2);
+					if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+						code.add(Divide);
+				}
+				else {
+					code.append(arg2);
+				}
+			}
+			else if (arg1type == PrimitiveType.RATIONAL) {
+				if (arg1pred.contains("IntegerConstantNode")) {
+					code.add(PushI, 1);
+					code.append(arg2);
+					if (arg2pred.contains("FloatConstantNode"))
+						code.add(ConvertI);
+				}
+				else if (node.child(0).nChildren() > 0) {
+					if ((node.child(0).child(0).getType() == PrimitiveType.INTEGER) && (!node.child(0).getToken().isLextant(Punctuator.OVER))) {
+						code.add(PushI, 1);
+						code.append(arg2);
+						if (arg2pred.contains("FloatConstantNode"))
+							code.add(ConvertI);
+					}
+					else {
+						code.append(arg2);
+					}
+				}
+				else {
+					code.append(arg2);
+				}
+			}
+			else {
+				code.append(arg2);
+			}
 			
-		
 			
 			ASMOpcode opcode = opcodeForOperator(node.getOperator(),arg1type,arg2type);
 			code.add(opcode);							// type-dependent! (opcode is different for floats and for ints)
@@ -882,16 +1063,24 @@ public class ASMCodeGenerator {
 				return Nop;
 			}
 			case DIVIDE: 
-			if ((arg1 == PrimitiveType.INTEGER) && (arg2 == PrimitiveType.INTEGER))
+			if ((arg1 == PrimitiveType.INTEGER) && (arg2 == PrimitiveType.INTEGER)) {
+				code.add(Duplicate);
+				code.add(JumpFalse, "$$i-divide-by-zero" );
 				return Divide;	
-			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT))
+			}
+			if  ((arg1 == PrimitiveType.FLOAT) && (arg2 == PrimitiveType.FLOAT)) {
+				code.add(Duplicate);
+				code.add(JumpFZero, "$$i-divide-by-zero" );
 				return FDivide;
+			}
 			if ((arg1 == PrimitiveType.RATIONAL) && (arg2 == PrimitiveType.RATIONAL)) {
 				rationaldiv();
 				lowestterms();
 				return Nop;
 			}
 			case OVER:
+				code.add(Duplicate);
+				code.add(JumpFalse, "$$i-divide-by-zero" );
 				lowestterms();
 				return Nop;
 			case EXPRESS_OVER:

@@ -99,7 +99,7 @@ public enum ASMOpcode {
 	// Control flow
 	Label,			// takes a string operand, and labels this place in the instruction store
 					// with that string.  (this is an assembler directive, not an instruction opcode)
-
+ 
 	Jump,			// takes a string operand, branches to statement with that label.
 	JumpFalse,		// takes a string operand. Pops top value (integer) from stack, does Jump if value=0
 	JumpTrue,		// takes a string operand. Pops the top (integer) and Jumps if it is not 0.

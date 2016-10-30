@@ -67,6 +67,15 @@ public class FunctionSignatures extends ArrayList<FunctionSignature> {
 	static {
 		// here's one example to get you started with FunctionSignatures: the signatures for addition.		
 		// for this to work, you should statically import PrimitiveType.*
+		
+		new FunctionSignatures(Punctuator.ASSIGN,
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.INTEGER),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.FLOAT, PrimitiveType.FLOAT, PrimitiveType.FLOAT),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.RATIONAL, PrimitiveType.RATIONAL, PrimitiveType.RATIONAL),
+			new FunctionSignature(ASMOpcode.Nop,PrimitiveType.CHAR, PrimitiveType.CHAR, PrimitiveType.CHAR),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.STRING, PrimitiveType.STRING, PrimitiveType.STRING),
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN)
+		);
 
 		new FunctionSignatures(Punctuator.ADD,
 		    new FunctionSignature(ASMOpcode.Add, PrimitiveType.INTEGER, PrimitiveType.INTEGER, PrimitiveType.INTEGER),
