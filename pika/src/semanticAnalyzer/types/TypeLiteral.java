@@ -28,4 +28,14 @@ public enum TypeLiteral implements Type {
 	public String infoString() {
 		return infoString;
 	}
+	public Type getType() {
+		return this;
+	}
+	public boolean match (Type t) {
+		return this == t;
+	}
+	@Override
+	public void setType(Type type) {
+		
+	}
 }

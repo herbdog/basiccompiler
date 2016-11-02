@@ -9,6 +9,9 @@ public interface ParseNodeVisitor {
 	void visitEnter(BinaryOperatorNode node);
 	void visitLeave(BinaryOperatorNode node);
 	
+	void visitEnter(ArrayNode node);
+	void visitLeave(ArrayNode node);
+	
 	void visitEnter(NotOperatorNode node);
 	void visitLeave(NotOperatorNode node);
 	
@@ -70,6 +73,12 @@ public interface ParseNodeVisitor {
 			defaultVisitEnter(node);
 		}
 		public void visitLeave(BinaryOperatorNode node) {
+			defaultVisitLeave(node);
+		}
+		public void visitEnter(ArrayNode node) {
+			defaultVisitEnter(node);
+		}
+		public void visitLeave(ArrayNode node) {
 			defaultVisitLeave(node);
 		}
 		public void visitEnter(NotOperatorNode node) {

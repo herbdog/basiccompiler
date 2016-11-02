@@ -9,6 +9,7 @@ import parseTree.nodeTypes.NewlineNode;
 import parseTree.nodeTypes.TabNode;
 import parseTree.nodeTypes.PrintStatementNode;
 import parseTree.nodeTypes.SpaceNode;
+import semanticAnalyzer.types.ArrayType;
 import semanticAnalyzer.types.PrimitiveType;
 import semanticAnalyzer.types.Type;
 import asmCodeGenerator.ASMCodeGenerator.CodeVisitor;
@@ -44,23 +45,28 @@ public class PrintStatementGenerator {
 
 	private void appendPrintCode(ParseNode node) {
 		String format = null;
-		if (node.getType() == PrimitiveType.STRING) {
+		if (node.getType().getType() == PrimitiveType.STRING) {
 			format = printString(node);
 		}
-		else if (node.getType() == PrimitiveType.RATIONAL) {
+		else if (node.getType().getType() == PrimitiveType.RATIONAL) {
 			printRational(node);
 			return;
 		}
+		else if (node.getType().getType() instanceof ArrayType) {
+			printArray(node);
+			return;
+		}
 		else {
-			format = printFormat(node.getType());
+			format = printFormat(node.getType().getType().getType());
 		}
 		code.append(visitor.removeValueCode(node));
 		convertToStringIfBoolean(node);
 		code.add(PushD, format);
 		code.add(Printf);
 	}
+	
 	private void convertToStringIfBoolean(ParseNode node) {
-		if(node.getType() != PrimitiveType.BOOLEAN) {
+		if(node.getType().getType() != PrimitiveType.BOOLEAN) {
 			return;
 		}
 		
@@ -231,7 +237,34 @@ public class PrintStatementGenerator {
 		
 		code.add(Label, endlabel);
 	}
+	
+	private void printArray(ParseNode node) {
+		
+		String format = printFormat(node.getType().getType().getType().getType());
+		Labeller print = new Labeller("printarray");
+		String start = print.newLabel("start");
+		String end = print.newLabel("end");
+		
+		code.append(visitor.removeValueCode(node));
 
+		code.add(Label, start);
+		code.add(PushD, format);
+		code.add(Printf);
+		code.add(PushI, 30012);
+		code.add(LoadI);
+		code.add(PushI, 1);
+		code.add(Subtract);
+		code.add(Duplicate);
+		code.add(PushI, 30012);
+		code.add(Exchange);
+		code.add(StoreI);
+		code.add(JumpTrue, start);
+		code.add(Jump, end);
+		
+		code.add(Label, end);
+		System.out.print(code);
+		
+	}
 
 	private static String printFormat(Type type) {
 		assert type instanceof PrimitiveType;

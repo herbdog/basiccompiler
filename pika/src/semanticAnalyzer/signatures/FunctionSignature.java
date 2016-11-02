@@ -2,7 +2,6 @@ package semanticAnalyzer.signatures;
 
 import java.util.List;
 
-import semanticAnalyzer.types.TypeLiteral;
 import semanticAnalyzer.types.PrimitiveType;
 import semanticAnalyzer.types.Type;
 import lexicalAnalyzer.Lextant;
@@ -113,7 +112,8 @@ public class FunctionSignature {
 		case AND:		return FunctionSignatures.signaturesOf(Punctuator.AND).acceptingSignature(TypeList);
 		case OR:		return FunctionSignatures.signaturesOf(Punctuator.OR).acceptingSignature(TypeList);
 		case NOT:		return FunctionSignatures.signaturesOf(Punctuator.NOT).acceptingSignature(TypeList);
-
+		case NULL_PUNCTUATOR:return FunctionSignatures.signaturesOf(Punctuator.NULL_PUNCTUATOR).acceptingSignature(TypeList);
+	
 		default:
 			return neverMatchedSignature;
 		}

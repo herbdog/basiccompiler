@@ -446,8 +446,8 @@ public class Parser {
 		if(startsBracketExpression(nowReading)) {
 			return parseBracketExpression();
 		}
-		if(startsCastingExpression(nowReading)) {
-			return parseCastingExpression();
+		if(startsSquareBracketsExpression(nowReading)) {
+			return parseSquareBracketsExpression();
 		}
 		if(startsNotExpression(nowReading)) {
 			return parseNotExpression();
@@ -455,7 +455,7 @@ public class Parser {
 		return parseLiteral();
 	}
 	private boolean startsAtomicExpression(Token token) {
-		return startsLiteral(token) || startsBracketExpression(token) || startsCastingExpression(token) || startsNotExpression(token);
+		return startsLiteral(token) || startsBracketExpression(token) || startsSquareBracketsExpression(token) || startsNotExpression(token);
 	}
 	// BRACKETS 
 	private ParseNode parseBracketExpression() {
@@ -471,24 +471,34 @@ public class Parser {
 		return token.isLextant(Punctuator.OPEN_BRACKET);
 	}
 	//casting
-	private ParseNode parseCastingExpression() {
-		if (!startsCastingExpression(nowReading)) {
+	private ParseNode parseSquareBracketsExpression() {
+		if (!startsSquareBracketsExpression(nowReading)) {
 			return syntaxErrorNode("CastingExpression");
 		}
 		expect(Punctuator.OPEN_SQUARE_BRACKET);
 		ParseNode expr = parseExpression();
-		while(nowReading.isLextant(Punctuator.CAST)) {
+		if (nowReading.isLextant(Punctuator.CAST)) {
 			Token cast = nowReading;
 			readToken();
 			ParseNode type = new TypeNode(nowReading);
 			expr = BinaryOperatorNode.withChildren(cast, expr, type);
+			readToken();
+			expect(Punctuator.CLOSE_SQUARE_BRACKET);
+			return expr;
 		}
-		readToken();
-		expect(Punctuator.CLOSE_SQUARE_BRACKET);
-		return expr;
-		
+		else {
+			ParseNode arraynode = new ArrayNode(previouslyRead);
+			arraynode.appendChild(expr);
+			while (nowReading.isLextant(Punctuator.SEPARATOR)) {
+				readToken();
+				ParseNode elementnodes = parseExpression();
+				arraynode.appendChild(elementnodes);
+			}
+			expect(Punctuator.CLOSE_SQUARE_BRACKET);
+			return arraynode;
+		}
 	}
-	private boolean startsCastingExpression(Token token) {
+	private boolean startsSquareBracketsExpression(Token token) {
 		return token.isLextant(Punctuator.OPEN_SQUARE_BRACKET);
 	}
 	// literal -> number | identifier | booleanConstant

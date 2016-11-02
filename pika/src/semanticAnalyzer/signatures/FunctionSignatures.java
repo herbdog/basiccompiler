@@ -52,6 +52,9 @@ public class FunctionSignatures extends ArrayList<FunctionSignature> {
 		if(signaturesForKey.containsKey(key)) {
 			return signaturesForKey.get(key);
 		}
+		else if(signaturesForKey.containsKey(null)) {
+			return signaturesForKey.get(null);
+		}
 		return nullSignatures;
 	}
 	public static FunctionSignature signature(Object key, List<Type> types) {
@@ -59,7 +62,6 @@ public class FunctionSignatures extends ArrayList<FunctionSignature> {
 		return signatures.acceptingSignature(types);
 	}
 
-	
 	
 	/////////////////////////////////////////////////////////////////////////////////
 	// Put the signatures for operators in the following static block.
@@ -168,10 +170,10 @@ public class FunctionSignatures extends ArrayList<FunctionSignature> {
 			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN)
 		);
 		new FunctionSignatures(Punctuator.OR,
-				new FunctionSignature(ASMOpcode.Nop, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN)
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN)
 		);
 		new FunctionSignatures(Punctuator.NOT,
-				new FunctionSignature(ASMOpcode.Nop, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN)
+			new FunctionSignature(ASMOpcode.Nop, PrimitiveType.BOOLEAN, PrimitiveType.BOOLEAN)
 		);
 	}
 

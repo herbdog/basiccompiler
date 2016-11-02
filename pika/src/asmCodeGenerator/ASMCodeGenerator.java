@@ -10,6 +10,7 @@ import lexicalAnalyzer.Lextant;
 import lexicalAnalyzer.Punctuator;
 import parseTree.*;
 import parseTree.nodeTypes.*;
+import semanticAnalyzer.types.ArrayType;
 import semanticAnalyzer.types.PrimitiveType;
 import semanticAnalyzer.types.Type;
 import semanticAnalyzer.types.TypeLiteral;
@@ -35,7 +36,6 @@ public class ASMCodeGenerator {
 	
 	public ASMCodeFragment makeASM() {
 		ASMCodeFragment code = new ASMCodeFragment(GENERATES_VOID);
-
 		code.append( RunTime.getEnvironment() );
 		code.append( globalVariableBlockASM() );
 		code.append( programASM() );
@@ -129,28 +129,73 @@ public class ASMCodeGenerator {
 			}	
 		}
 		private void turnAddressIntoValue(ASMCodeFragment code, ParseNode node) {
-			if(node.getType() == PrimitiveType.INTEGER) {
+			if(node.getType().getType().getType() == PrimitiveType.INTEGER) {
 				code.add(LoadI);
 			}	
-			else if(node.getType() == PrimitiveType.FLOAT) {
+			else if(node.getType().getType().getType() == PrimitiveType.FLOAT) {
 				code.add(LoadF);
 			}
-			else if(node.getType() == PrimitiveType.BOOLEAN) {
+			else if(node.getType().getType().getType() == PrimitiveType.BOOLEAN) {
 				code.add(LoadC);
 			}	
-			else if(node.getType() == PrimitiveType.STRING) {
+			else if(node.getType().getType().getType() == PrimitiveType.STRING) {
 				code.add(Nop);
 			}
-			else if(node.getType() == PrimitiveType.CHAR) {
+			else if(node.getType().getType().getType() == PrimitiveType.CHAR) {
 				code.add(LoadC);
 			}
-			else if(node.getType() == PrimitiveType.RATIONAL) {
+			else if(node.getType().getType().getType() == PrimitiveType.RATIONAL) {
 				code.add(Duplicate);
 				code.add(PushI, 4);
 				code.add(Add);
 				code.add(LoadI);
 				code.add(Exchange);
 				code.add(LoadI);
+			}
+			else if(node.getType().getType() instanceof ArrayType) {
+				Labeller traverse = new Labeller("traverse");
+				String start = traverse.newLabel("start");
+				String end = traverse.newLabel("end");
+				
+				code.add(Duplicate);
+				code.add(PushI, 8); 
+				code.add(LoadI); 		//subtype size
+				code.add(PushI, 30004);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(Duplicate);
+				code.add(PushI, 12);
+				code.add(LoadI);
+				code.add(Duplicate);
+				code.add(PushI, 30000);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(PushI, 30012);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(PushI, 16);	// length, first location
+				code.add(Add);
+				
+				code.add(Label, start);
+				code.add(Duplicate);
+				code.add(LoadI);
+				code.add(Exchange);
+				code.add(PushI, 30004);
+				code.add(LoadI);
+				code.add(Add);
+				code.add(PushI, 30000);
+				code.add(LoadI);
+				code.add(PushI, 1);
+				code.add(Subtract);
+				code.add(Duplicate);
+				code.add(PushI, 30000);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(JumpTrue, start);
+				code.add(Jump, end);
+				
+				code.add(Label, end);
+				
 			}
 			else {
 				assert false : "node " + node;
@@ -218,7 +263,7 @@ public class ASMCodeGenerator {
 			newVoidCode(node);
 			ASMCodeFragment lvalue = removeAddressCode(node.child(0));	
 			ASMCodeFragment rvalue = removeValueCode(node.child(1));
-			if(node.child(1).getType() == PrimitiveType.RATIONAL) {
+			if (node.child(1).getType().getType() == PrimitiveType.RATIONAL) {
 				code.append(lvalue);
 				code.add(Duplicate);
 				code.add(PushI, 4);
@@ -235,7 +280,7 @@ public class ASMCodeGenerator {
 				code.add(StoreI);
 			}
 			else {
-				if(node.child(1).getType() == PrimitiveType.STRING) {
+				if(node.child(1).getType().getType() == PrimitiveType.STRING) {
 					if(node.child(1).getToken().toString().contains("CAST")) {
 						ParseNode tempnode = node.child(1);
 						while(!tempnode.getChildren().isEmpty()) {
@@ -253,7 +298,7 @@ public class ASMCodeGenerator {
 			
 				code.append(lvalue);
 				code.append(rvalue);
-				Type type = node.getType();
+				Type type = node.getType().getType().getType();
 				code.add(opcodeForStore(type));
 			}
 		}
@@ -273,6 +318,9 @@ public class ASMCodeGenerator {
 			if(type == PrimitiveType.CHAR) {
 				return StoreC;
 			}
+			if(type instanceof ArrayType) {
+				return Nop;
+			}
 			assert false: "Type " + type + " unimplemented in opcodeForStore()";
 			return null;
 		}
@@ -281,7 +329,7 @@ public class ASMCodeGenerator {
 			newVoidCode(node);
 			ASMCodeFragment lvalue = removeAddressCode(node.child(0));
 			ASMCodeFragment rvalue = removeValueCode(node.child(1));
-			if ((node.child(1).getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("BinaryOperatorNode (OVER) RATIONAL"))) {
+			if ((node.child(1).getType().getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("BinaryOperatorNode (OVER) RATIONAL"))) {
 				
 				code.append(lvalue);
 				code.add(Duplicate);
@@ -299,7 +347,7 @@ public class ASMCodeGenerator {
 				code.add(StoreI);
 				
 			}
-			else if ((node.child(1).getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("IntegerConstantNode"))) {
+			else if ((node.child(1).getType().getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("IntegerConstantNode"))) {
 				
 				code.append(lvalue);
 				code.add(Duplicate);
@@ -318,7 +366,7 @@ public class ASMCodeGenerator {
 				code.add(StoreI);
 				
 			}
-			else if ((node.child(1).getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("FloatConstantNode"))) {
+			else if ((node.child(1).getType().getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("FloatConstantNode"))) {
 				
 				code.append(lvalue);
 				code.add(Duplicate);
@@ -338,7 +386,7 @@ public class ASMCodeGenerator {
 				code.add(StoreI);
 				
 			}
-			else if ((node.child(1).getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("CharacterConstantNode"))) {
+			else if ((node.child(1).getType().getType() == PrimitiveType.RATIONAL) && (node.child(1).toString().contains("CharacterConstantNode"))) {
 				
 				code.append(lvalue);
 				code.add(Duplicate);
@@ -358,7 +406,7 @@ public class ASMCodeGenerator {
 				
 			}
 			else {
-				if(node.child(1).getType() == PrimitiveType.STRING) {
+				if(node.child(1).getType().getType() == PrimitiveType.STRING) {
 					if(node.child(1).getToken().toString().contains("CAST")) {
 						String temp = stringlist.get(stringlist.size()-1);
 						String temp2 = node.child(0).getToken().getLexeme().toString();
@@ -375,43 +423,43 @@ public class ASMCodeGenerator {
 				
 				code.append(lvalue);
 				code.append(rvalue);
-				if ((node.child(1).getType() == PrimitiveType.INTEGER) && (node.child(1).toString().contains("FloatConstantNode"))) {
+				if ((node.child(1).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).toString().contains("FloatConstantNode"))) {
 					code.add(ConvertI);
 				}
-				else if ((node.child(1).getType() == PrimitiveType.INTEGER) && (node.child(1).toString().contains("OVER"))) {
+				else if ((node.child(1).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).toString().contains("OVER"))) {
 					code.add(Divide);
 				}
-				else if ((node.child(1).getType() == PrimitiveType.INTEGER) && (node.child(1).toString().contains("CharacterConstantNode"))) {
+				else if ((node.child(1).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).toString().contains("CharacterConstantNode"))) {
 				}
-				else if ((node.child(1).getType() == PrimitiveType.FLOAT) && (node.child(1).toString().contains("OVER"))) {
+				else if ((node.child(1).getType().getType() == PrimitiveType.FLOAT) && (node.child(1).toString().contains("OVER"))) {
 					code.add(ConvertF);
 					code.add(Exchange);
 					code.add(ConvertF);
 					code.add(Exchange);
 					code.add(FDivide);
 				}
-				else if ((node.child(1).getType() == PrimitiveType.FLOAT) && (node.child(1).toString().contains("IntegerConstantNode"))) {
+				else if ((node.child(1).getType().getType() == PrimitiveType.FLOAT) && (node.child(1).toString().contains("IntegerConstantNode"))) {
 					code.add(ConvertF);
 				}
-				else if ((node.child(1).getType() == PrimitiveType.FLOAT) && (node.child(1).toString().contains("CharacterConstantNode"))) {
+				else if ((node.child(1).getType().getType() == PrimitiveType.FLOAT) && (node.child(1).toString().contains("CharacterConstantNode"))) {
 					code.add(ConvertF);
 				}
-				else if ((node.child(1).getType() == PrimitiveType.CHAR) && (node.child(1).toString().contains("OVER"))) {
+				else if ((node.child(1).getType().getType() == PrimitiveType.CHAR) && (node.child(1).toString().contains("OVER"))) {
 					code.add(Divide);
 				}
-				else if ((node.child(1).getType() == PrimitiveType.CHAR) && (node.child(1).toString().contains("IntegerConstantNode"))) {
+				else if ((node.child(1).getType().getType() == PrimitiveType.CHAR) && (node.child(1).toString().contains("IntegerConstantNode"))) {
 				}
-				else if ((node.child(1).getType() == PrimitiveType.CHAR) && (node.child(1).toString().contains("FloatConstantNode"))) {
+				else if ((node.child(1).getType().getType() == PrimitiveType.CHAR) && (node.child(1).toString().contains("FloatConstantNode"))) {
 					code.add(ConvertI);
 				}
-				Type type = node.child(1).getType();
+				Type type = node.child(1).getType().getType();
 				node.child(0).setType(type);
 				code.add(opcodeForStore(type));
 			}
 		}
 		
 		public void visitLeave(IfNode node) {
-			if (node.getChildren().size() == 2) {
+			if (node.nChildren() == 2) {
 				newVoidCode(node);
 				ASMCodeFragment exprval = removeValueCode(node.child(0));
 				ASMCodeFragment block = removeVoidCode(node.child(1));
@@ -555,20 +603,20 @@ public class ASMCodeGenerator {
 			code.add(Label, arg2Label);
 			code.append(arg2);
 			code.add(Label, subLabel);
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(Subtract);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(Subtract);
 			}
 			else {
 				code.add(FSubtract);
 			}
 			
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(JumpPos, trueLabel);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(JumpPos, trueLabel);
 			}
 			else {
@@ -607,20 +655,20 @@ public class ASMCodeGenerator {
 			code.add(Label, arg2Label);
 			code.append(arg2);
 			code.add(Label, subLabel);
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(Subtract);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(Subtract);
 			}
 			else {
 				code.add(FSubtract);
 			}
 			
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(JumpNeg, falseLabel);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(JumpNeg, falseLabel);
 			}
 			else {
@@ -659,20 +707,20 @@ public class ASMCodeGenerator {
 			code.add(Label, arg2Label);
 			code.append(arg2);
 			code.add(Label, subLabel);
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(Subtract);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(Subtract);
 			}
 			else {
 				code.add(FSubtract);
 			}
 			
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(JumpNeg, trueLabel);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(JumpNeg, trueLabel);
 			}
 			else {
@@ -710,20 +758,20 @@ public class ASMCodeGenerator {
 			code.add(Label, arg2Label);
 			code.append(arg2);
 			code.add(Label, subLabel);
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
 				code.add(Subtract);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
 				code.add(Subtract);
 			}
 			else {
 				code.add(FSubtract);
 			}
 			
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(JumpPos, falseLabel);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(JumpPos, falseLabel);
 			}
 			else {
@@ -762,26 +810,26 @@ public class ASMCodeGenerator {
 			code.add(Label, arg2Label);
 			code.append(arg2);
 			code.add(Label, subLabel);
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(Subtract);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(Subtract);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.BOOLEAN) && (node.child(1).getType() == PrimitiveType.BOOLEAN)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.BOOLEAN) && (node.child(1).getType().getType() == PrimitiveType.BOOLEAN)) {
 				code.add(Subtract);
 			}
 			else {
 				code.add(FSubtract);
 			}
 			
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(JumpFalse, trueLabel);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(JumpFalse, trueLabel);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.BOOLEAN) && (node.child(1).getType() == PrimitiveType.BOOLEAN)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.BOOLEAN) && (node.child(1).getType().getType() == PrimitiveType.BOOLEAN)) {
 				code.add(JumpFalse, trueLabel);
 			}
 			else {
@@ -819,26 +867,26 @@ public class ASMCodeGenerator {
 			code.add(Label, arg2Label);
 			code.append(arg2);
 			code.add(Label, subLabel);
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(Subtract);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(Subtract);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.BOOLEAN) && (node.child(1).getType() == PrimitiveType.BOOLEAN)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.BOOLEAN) && (node.child(1).getType().getType() == PrimitiveType.BOOLEAN)) {
 				code.add(Subtract);
 			}
 			else {
 				code.add(FSubtract);
 			}
 			
-			if ((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == PrimitiveType.INTEGER)) {
+			if ((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == PrimitiveType.INTEGER)) {
 				code.add(JumpFalse, falseLabel);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.CHAR) && (node.child(1).getType() == PrimitiveType.CHAR)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.CHAR) && (node.child(1).getType().getType() == PrimitiveType.CHAR)) {
 				code.add(JumpFalse, falseLabel);
 			}
-			else if ((node.child(0).getType() == PrimitiveType.BOOLEAN) && (node.child(1).getType() == PrimitiveType.BOOLEAN)) {
+			else if ((node.child(0).getType().getType() == PrimitiveType.BOOLEAN) && (node.child(1).getType().getType() == PrimitiveType.BOOLEAN)) {
 				code.add(JumpFalse, falseLabel);
 			}
 			else {
@@ -859,15 +907,15 @@ public class ASMCodeGenerator {
 			newValueCode(node);
 			ASMCodeFragment arg1 = removeValueCode(node.child(0));
 			code.append(arg1);	
-			if(((node.child(0).getType() == PrimitiveType.INTEGER) || (node.child(0).getType() == PrimitiveType.CHAR)) && (node.child(1).getType() == TypeLiteral.RAT))
+			if(((node.child(0).getType().getType() == PrimitiveType.INTEGER) || (node.child(0).getType().getType() == PrimitiveType.CHAR)) && (node.child(1).getType().getType() == TypeLiteral.RAT))
 				castrational();
-			if((node.child(0).getType() == PrimitiveType.FLOAT) && (node.child(1).getType() == TypeLiteral.RAT)) {
+			if((node.child(0).getType().getType() == PrimitiveType.FLOAT) && (node.child(1).getType().getType() == TypeLiteral.RAT)) {
 				castfrational();
 				lowestterms();
 			}
-			if((node.child(0).getType() == PrimitiveType.INTEGER) && (node.child(1).getType() == TypeLiteral.FLOAT))
+			if((node.child(0).getType().getType() == PrimitiveType.INTEGER) && (node.child(1).getType().getType() == TypeLiteral.FLOAT))
 				code.add(ConvertF);
-			if((node.child(0).getType() == PrimitiveType.FLOAT) && (node.child(1).getType() == TypeLiteral.INT))
+			if((node.child(0).getType().getType() == PrimitiveType.FLOAT) && (node.child(1).getType().getType() == TypeLiteral.INT))
 				code.add(ConvertI);
 		}
 		private void visitAndOperatorNode(BinaryOperatorNode node, Lextant operator) {
@@ -926,8 +974,8 @@ public class ASMCodeGenerator {
 			newValueCode(node);
 			ASMCodeFragment arg1 = removeValueCode(node.child(0));
 			ASMCodeFragment arg2 = removeValueCode(node.child(1));
-			Type arg1type = node.child(0).getType();
-			Type arg2type = node.child(1).getType();
+			Type arg1type = node.child(0).getType().getType();
+			Type arg2type = node.child(1).getType().getType();
 			String arg1pred = node.child(0).toString().split("\n")[0];
 			String arg2pred = node.child(1).toString().split("\n")[0];
 			code.append(arg1);
@@ -1301,6 +1349,108 @@ public class ASMCodeGenerator {
 			
 		}
 		
+		//array node
+		
+		public void visitLeave(ArrayNode node) {
+			newAddressCode(node);
+			newValueCode(node);
+			Labeller label = new Labeller("array");
+			String typeid = label.newLabel("typeid");
+			String status = label.newLabel("status");
+			String length = label.newLabel("length");
+			String subtypesize = label.newLabel("subtypesize");
+			String data = label.newLabel("data");
+			Type argtype = node.child(0).getType().getType();
+			
+			code.add(Label, typeid);
+			code.add(Duplicate);
+			code.add(PushI, 4);
+			code.add(Add);
+			code.add(Exchange);
+			code.add(PushI, 1);
+			code.add(StoreI);
+			code.add(Label, status);
+			code.add(Duplicate);
+			code.add(PushI, 4);
+			code.add(Add);
+			code.add(Exchange);
+			code.add(PushI, 2);
+			code.add(StoreI);
+			code.add(Label, subtypesize);
+			code.add(Duplicate);
+			code.add(PushI, 4);
+			code.add(Add);
+			code.add(Exchange);
+			code.add(PushI, node.getType().getType().getSize());
+			code.add(StoreI);
+			code.add(Label, length);
+			code.add(Duplicate);
+			code.add(PushI, node.nChildren());
+			code.add(Add);
+			code.add(Exchange);
+			code.add(PushI, 4);
+			code.add(StoreI);	
+			code.add(Label, data);
+			
+			for(int i = 0; i < node.nChildren(); i ++) {
+				argtype = node.child(i).getType().getType();
+				String argpred = node.child(i).toString().split("\n")[0];
+				ASMCodeFragment value = removeValueCode(node.child(i));
+				
+				code.add(Duplicate);
+				code.add(PushI, argtype.getSize());
+				code.add(Add);
+				code.add(Exchange);
+				code.append(value);
+				
+				if (argtype == PrimitiveType.INTEGER) {
+					if (argpred.contains("FloatConstantNode")) {
+						code.add(ConvertI);
+					}
+					else if (argpred.contains("CharacterConstantNode")) {
+					}
+					else if (argpred.contains("BinaryOperatorNode (OVER)")) {
+						code.add(Divide);
+					}
+				}
+				else if (argtype == PrimitiveType.FLOAT) {
+					if (argpred.contains("IntegerConstantNode")) {
+						code.add(ConvertF);
+					}
+					else if (argpred.contains("CharacterConstantNode")) {
+						code.add(ConvertF);
+					}
+					else if (argpred.contains("BinaryOperatorNode (OVER)")) {
+						code.add(Divide);
+						code.add(ConvertF);
+					}
+				}
+				else if (argtype == PrimitiveType.CHAR) {
+					if (argpred.contains("IntegerConstantNode")) {
+					}
+					else if (argpred.contains("FloatConstantNode")) {
+						code.add(ConvertI);
+					}
+					else if (argpred.contains("BinaryOperatorNode (OVER)")) {
+						code.add(Divide);
+					}
+				}
+				else if (argtype == PrimitiveType.RATIONAL) {
+					if (argpred.contains("IntegerConstantNode")) {
+						code.add(PushI, 1);
+					}
+					else if (argpred.contains("CharacterConstantNode")) {
+						code.add(PushI, 1);
+					}
+					else if (argpred.contains("FloatConstantNode")) {
+						castfrational();
+					}
+				}
+				code.add(opcodeForStore(argtype));
+			}
+			code.add(Pop);
+		}
+		
 		///////////////////////////////////////////////////////////////////////////
 		// leaf nodes (ErrorNode not necessary)
 		public void visit(BooleanConstantNode node) {
@@ -1315,7 +1465,7 @@ public class ASMCodeGenerator {
 		}		
 		public void visit(IntegerConstantNode node) {
 			newValueCode(node);
-			
+
 			code.add(PushI, node.getValue());
 		}
 		public void visit(FloatConstantNode node) {

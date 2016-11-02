@@ -5,6 +5,7 @@ import java.util.List;
 
 import semanticAnalyzer.types.PrimitiveType;
 import semanticAnalyzer.types.Type;
+import semanticAnalyzer.types.TypeVariable;
 import symbolTable.Binding;
 import symbolTable.Scope;
 import symbolTable.SymbolTable;
@@ -22,7 +23,7 @@ public class ParseNode {
 
 	public ParseNode(Token token) {
 		this.token = token;
-		this.type = PrimitiveType.NO_TYPE;
+		this.type = new TypeVariable();
 		this.scope = null;
 		this.parent = NO_PARENT;
 		initChildren();
@@ -42,7 +43,7 @@ public class ParseNode {
 // attributes
 	
 	public void setType(Type type) {
-		this.type = type;
+		this.type.setType(type);
 	}
 	public Type getType() {
 		return type;

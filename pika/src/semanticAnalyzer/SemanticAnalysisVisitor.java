@@ -1,8 +1,11 @@
 package semanticAnalyzer;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
+import asmCodeGenerator.codeStorage.ASMOpcode;
 import lexicalAnalyzer.Keyword;
 import lexicalAnalyzer.Lextant;
 import lexicalAnalyzer.Punctuator;
@@ -11,9 +14,12 @@ import parseTree.ParseNode;
 import parseTree.ParseNodeVisitor;
 import parseTree.nodeTypes.*;
 import semanticAnalyzer.signatures.FunctionSignature;
+import semanticAnalyzer.signatures.FunctionSignatures;
+import semanticAnalyzer.types.ArrayType;
 import semanticAnalyzer.types.PrimitiveType;
 import semanticAnalyzer.types.Type;
 import semanticAnalyzer.types.TypeLiteral;
+import semanticAnalyzer.types.TypeVariable;
 import symbolTable.Binding;
 import symbolTable.Scope;
 import tokens.LextantToken;
@@ -93,57 +99,57 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		}
 		ParseNode left = node.child(0);
 		ParseNode right = node.child(1);
-		List<Type> childTypes = Arrays.asList(left.getType(), right.getType());
+		List<Type> childTypes = Arrays.asList(left.getType().getType().getType(), right.getType().getType());
 		FunctionSignature signature = FunctionSignature.signatureOf(Punctuator.ASSIGN, childTypes);
 		if (signature.accepts(childTypes)) {
 			node.setType(signature.resultType());
 		}
 		else {
-			if ((left.getType() == PrimitiveType.INTEGER) && (right.getType() == PrimitiveType.FLOAT)) {
+			if ((left.getType().getType() == PrimitiveType.INTEGER) && (right.getType().getType() == PrimitiveType.FLOAT)) {
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.INTEGER) && (right.getType() == PrimitiveType.CHAR)){
+			else if ((left.getType().getType() == PrimitiveType.INTEGER) && (right.getType().getType() == PrimitiveType.CHAR)){
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.INTEGER) && (right.getType() == PrimitiveType.RATIONAL)){
+			else if ((left.getType().getType() == PrimitiveType.INTEGER) && (right.getType().getType() == PrimitiveType.RATIONAL)){
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.FLOAT) && (right.getType() == PrimitiveType.INTEGER)) {
+			else if ((left.getType().getType() == PrimitiveType.FLOAT) && (right.getType().getType() == PrimitiveType.INTEGER)) {
 				right.setType(PrimitiveType.FLOAT);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.FLOAT) && (right.getType() == PrimitiveType.CHAR)) {
+			else if ((left.getType().getType() == PrimitiveType.FLOAT) && (right.getType().getType() == PrimitiveType.CHAR)) {
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.FLOAT) && (right.getType() == PrimitiveType.RATIONAL)) {
+			else if ((left.getType().getType() == PrimitiveType.FLOAT) && (right.getType().getType() == PrimitiveType.RATIONAL)) {
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.CHAR) && (right.getType() == PrimitiveType.INTEGER)) {
+			else if ((left.getType().getType() == PrimitiveType.CHAR) && (right.getType().getType() == PrimitiveType.INTEGER)) {
 				right.setType(PrimitiveType.CHAR);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.CHAR) && (right.getType() == PrimitiveType.FLOAT)) {
+			else if ((left.getType().getType() == PrimitiveType.CHAR) && (right.getType().getType() == PrimitiveType.FLOAT)) {
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.CHAR) && (right.getType() == PrimitiveType.RATIONAL)) {
+			else if ((left.getType().getType() == PrimitiveType.CHAR) && (right.getType().getType() == PrimitiveType.RATIONAL)) {
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.RATIONAL) && (right.getType() == PrimitiveType.INTEGER)) {
+			else if ((left.getType().getType() == PrimitiveType.RATIONAL) && (right.getType().getType() == PrimitiveType.INTEGER)) {
 				right.setType(PrimitiveType.RATIONAL);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.RATIONAL) && (right.getType() == PrimitiveType.CHAR)) {
+			else if ((left.getType().getType() == PrimitiveType.RATIONAL) && (right.getType().getType() == PrimitiveType.CHAR)) {
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.RATIONAL) && (right.getType() == PrimitiveType.FLOAT)) {
+			else if ((left.getType().getType() == PrimitiveType.RATIONAL) && (right.getType().getType() == PrimitiveType.FLOAT)) {
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
@@ -154,11 +160,11 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 	}
 	
 	public void visitLeave(IfNode node) {
-		assert node.child(0).getType() == PrimitiveType.BOOLEAN;
+		assert node.child(0).getType().getType() == PrimitiveType.BOOLEAN;
 	}
 	
 	public void visitLeave(WhileNode node) {
-		assert node.child(0).getType() == PrimitiveType.BOOLEAN;
+		assert node.child(0).getType().getType() == PrimitiveType.BOOLEAN;
 	}
 	///////////////////////////////////////////////////////////////////////////
 	// expressions
@@ -183,8 +189,7 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 			}
 		}
 		
-		List<Type> childTypes = Arrays.asList(left.getType(), right.getType());
-		
+		List<Type> childTypes = Arrays.asList(left.getType().getType(), right.getType().getType());
 		Lextant operator = operatorFor(node);
 		FunctionSignature signature = FunctionSignature.signatureOf(operator, childTypes);
 		
@@ -192,52 +197,52 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 			node.setType(signature.resultType());
 		}
 		else {
-			if ((left.getType() == PrimitiveType.INTEGER) && ((right.getType() == PrimitiveType.FLOAT) || (right.getType() == PrimitiveType.RATIONAL))) {
-				left.setType(right.getType());
+			if ((left.getType().getType() == PrimitiveType.INTEGER) && ((right.getType().getType() == PrimitiveType.FLOAT) || (right.getType().getType() == PrimitiveType.RATIONAL))) {
+				left.setType(right.getType().getType());
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.FLOAT) && (right.getType() == PrimitiveType.INTEGER)) {
-				left.setType(right.getType());
+			else if ((left.getType().getType() == PrimitiveType.FLOAT) && (right.getType().getType() == PrimitiveType.INTEGER)) {
+				left.setType(right.getType().getType());
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.RATIONAL) && (right.getType() == PrimitiveType.INTEGER)) {
-				left.setType(right.getType());
+			else if ((left.getType().getType() == PrimitiveType.RATIONAL) && (right.getType().getType() == PrimitiveType.INTEGER)) {
+				left.setType(right.getType().getType());
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.INTEGER) && (right.getType() == PrimitiveType.CHAR)) {
-				right.setType(left.getType());
+			else if ((left.getType().getType() == PrimitiveType.INTEGER) && (right.getType().getType() == PrimitiveType.CHAR)) {
+				right.setType(left.getType().getType());
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.FLOAT) && (right.getType() == PrimitiveType.CHAR)) {
+			else if ((left.getType().getType() == PrimitiveType.FLOAT) && (right.getType().getType() == PrimitiveType.CHAR)) {
 				left.setType(PrimitiveType.INTEGER);
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.RATIONAL) && (right.getType() == PrimitiveType.CHAR)) {
+			else if ((left.getType().getType() == PrimitiveType.RATIONAL) && (right.getType().getType() == PrimitiveType.CHAR)) {
 				left.setType(PrimitiveType.INTEGER);
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.CHAR) && ((right.getType() == PrimitiveType.FLOAT) || (right.getType() == PrimitiveType.RATIONAL))) {
+			else if ((left.getType().getType() == PrimitiveType.CHAR) && ((right.getType().getType() == PrimitiveType.FLOAT) || (right.getType().getType() == PrimitiveType.RATIONAL))) {
 				left.setType(PrimitiveType.INTEGER);
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.CHAR) && (right.getType() == PrimitiveType.INTEGER)) {
+			else if ((left.getType().getType() == PrimitiveType.CHAR) && (right.getType().getType() == PrimitiveType.INTEGER)) {
 				left.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.FLOAT) && (right.getType() == PrimitiveType.RATIONAL)) {
-				left.setType(PrimitiveType.INTEGER);
-				right.setType(PrimitiveType.INTEGER);
-				visitLeave(node);
-			}
-			else if ((left.getType() == PrimitiveType.RATIONAL) && (right.getType() == PrimitiveType.FLOAT)) {
+			else if ((left.getType().getType() == PrimitiveType.FLOAT) && (right.getType().getType() == PrimitiveType.RATIONAL)) {
 				left.setType(PrimitiveType.INTEGER);
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
 			}
-			else if ((left.getType() == PrimitiveType.FLOAT) && (right.getType() == PrimitiveType.FLOAT)) {
+			else if ((left.getType().getType() == PrimitiveType.RATIONAL) && (right.getType().getType() == PrimitiveType.FLOAT)) {
+				left.setType(PrimitiveType.INTEGER);
+				right.setType(PrimitiveType.INTEGER);
+				visitLeave(node);
+			}
+			else if ((left.getType().getType() == PrimitiveType.FLOAT) && (right.getType().getType() == PrimitiveType.FLOAT)) {
 				left.setType(PrimitiveType.INTEGER);
 				right.setType(PrimitiveType.INTEGER);
 				visitLeave(node);
@@ -249,11 +254,85 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		}
 	}
 	
+	public void visitLeave(ArrayNode node) {
+		List<Integer> integers = new LinkedList<Integer>();
+		List<Integer> floats = new LinkedList<Integer>();
+		List<Integer> characters = new LinkedList<Integer>();
+		List<Integer> rational = new LinkedList<Integer>();
+		List<ParseNode> children = node.getChildren();
+		Type[] childTypes = new Type[children.size()+1]; // heres where we try to determine each type and then see if how it constructs the above subtype
+		int i = 0;
+		for (i = 0; i < children.size(); i++) {		// but this is also where we need to determine a function signature that encompasses all the types we want and see if possible promotions exist
+			if (children.get(i).getType().getType() == PrimitiveType.INTEGER) {
+				integers.add(i);
+			}
+			else if (children.get(i).getType().getType() == PrimitiveType.FLOAT) {
+				floats.add(i);
+			}
+			else if (children.get(i).getType().getType() == PrimitiveType.CHAR) {
+				characters.add(i);
+			}
+			else if (children.get(i).getType().getType() == PrimitiveType.RATIONAL) {
+				rational.add(i);
+			}
+		}
+		// going to go by which type most frequently exists in the entire array to decide what to change to
+		// ie if integers > all others, then they all change to integer
+		if (integers.size() >= floats.size() + characters.size() + rational.size()) { // int dominant, change to all to int
+			for (int j = 0; j < floats.size(); j++) {
+				node.child(floats.get(j)).setType(PrimitiveType.INTEGER);
+			}
+			for (int j = 0; j < rational.size(); j++) {
+				node.child(rational.get(j)).setType(PrimitiveType.INTEGER);
+			}
+			for (int j = 0; j < characters.size(); j++) {
+				node.child(characters.get(j)).setType(PrimitiveType.INTEGER);
+			}
+		}
+		else if (floats.size() >= integers.size() + characters.size() + rational.size()) { 
+			for (int j = 0; j < integers.size(); j++) {
+				node.child(integers.get(j)).setType(PrimitiveType.FLOAT);
+			}
+			for (int j = 0; j < rational.size(); j++) {
+				node.child(rational.get(j)).setType(PrimitiveType.FLOAT);
+			}
+			for (int j = 0; j < characters.size(); j++) {
+				node.child(characters.get(j)).setType(PrimitiveType.FLOAT);
+			}
+		}
+		else if (characters.size() >= floats.size() + integers.size() + rational.size()) { 
+			for (int j = 0; j < floats.size(); j++) {
+				node.child(floats.get(j)).setType(PrimitiveType.CHAR);
+			}
+			for (int j = 0; j < rational.size(); j++) {
+				node.child(rational.get(j)).setType(PrimitiveType.CHAR);
+			}
+			for (int j = 0; j < integers.size(); j++) {
+				node.child(integers.get(j)).setType(PrimitiveType.CHAR);
+			}
+		}
+		else if (rational.size() >= floats.size() + integers.size() + characters.size()) { 
+			for (int j = 0; j < floats.size(); j++) {
+				node.child(floats.get(j)).setType(PrimitiveType.RATIONAL);
+			}
+			for (int j = 0; j < integers.size(); j++) {
+				node.child(integers.get(j)).setType(PrimitiveType.RATIONAL);
+			}
+			for (int j = 0; j < characters.size(); j++) {
+				node.child(characters.get(j)).setType(PrimitiveType.RATIONAL);
+			}
+		}
+		
+		Type arraytype = new ArrayType();
+		arraytype.setType(node.child(0).getType());
+		node.setType(arraytype);
+	}
+	
 	public void visitLeave(NotOperatorNode node) {
 		assert node.nChildren() == 1;
 		ParseNode right = node.child(0);
 		
-		List<Type> childTypes = Arrays.asList(right.getType());
+		List<Type> childTypes = Arrays.asList(right.getType().getType());
 		Lextant operator = operatorFor(node);
 		FunctionSignature signature = FunctionSignature.signatureOf(operator, childTypes);
 		
@@ -335,7 +414,7 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		if(!isBeingDeclared(node)) {		
 			Binding binding = node.findVariableBinding();
 			
-			node.setType(binding.getType());
+			node.setType(binding.getType().getType());
 			node.setBinding(binding);
 		}
 		// else parent DeclarationNode does the processing.
