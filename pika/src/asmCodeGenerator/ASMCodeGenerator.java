@@ -1,6 +1,9 @@
 package asmCodeGenerator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import asmCodeGenerator.codeStorage.ASMCodeFragment;
@@ -1631,45 +1634,57 @@ public class ASMCodeGenerator {
 		
 		public void visitLeave(IndexNode node) {
 			newAddressCode(node);
-			IdentifierNode iden = (IdentifierNode) node.child(0);
-			ASMCodeFragment index = removeValueCode(node.child(1));
 			
+			IdentifierNode iden = null;
+			ParseNode child = node.child(0);
+
+			iden = (IdentifierNode) child;
+
 			Binding binding = iden.getBinding();
 			binding.generateAddress(code);
-			code.add(LoadI);
-			code.add(Duplicate);
-			code.add(PushI, 90000);
-			code.add(Exchange);
-			code.add(StoreI);
-			code.add(PushI, 12);
-			code.add(Add);
-			code.add(LoadI);
-			code.add(PushI, 1);
-			code.add(Subtract);								//highest index possible
-			code.append(index);
-			code.add(Duplicate);
-			code.add(PushI, 76000);
-			code.add(Exchange);
-			code.add(StoreI);
-			code.add(JumpNeg, "$$index-out-of-range");		//negative index
-			code.add(PushI, 76000);
-			code.add(LoadI);
-			code.add(Subtract);								//if it is less than 0, it is out of range
-			code.add(JumpNeg, "$$index-out-of-range");
 			
-			code.add(PushI, 90000);
-			code.add(LoadI);
-			code.add(PushI, 16);
-			code.add(Add);
-			code.add(PushI, 76000);
-			code.add(LoadI);
-			code.add(PushI, 90000);
-			code.add(LoadI);
-			code.add(PushI, 8);
-			code.add(Add);
-			code.add(LoadI);
-			code.add(Multiply);
-			code.add(Add);									//this is the address of a[i]
+			for(int i = 1; i < node.nChildren(); i++) {
+				code.add(LoadI);
+				code.add(Duplicate);
+				code.add(PushI, 90000);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(PushI, 12);
+				code.add(Add);
+				code.add(LoadI);
+				code.add(PushI, 1);
+				code.add(Subtract);								//highest index possible
+				code.append(removeValueCode(node.child(i)));
+				code.add(Duplicate);
+				code.add(PushI, 76000);
+				code.add(Exchange);
+				code.add(StoreI);
+				code.add(JumpNeg, "$$index-out-of-range");		//negative index
+				code.add(PushI, 76000);
+				code.add(LoadI);
+				code.add(Subtract);								//if it is less than 0, it is out of range
+				code.add(JumpNeg, "$$index-out-of-range");
+				
+				code.add(PushI, 90000);
+				code.add(LoadI);
+				code.add(PushI, 16);
+				code.add(Add);
+				code.add(PushI, 76000);
+				code.add(LoadI);
+				code.add(PushI, 90000);
+				code.add(LoadI);
+				code.add(PushI, 8);
+				code.add(Add);
+				code.add(LoadI);
+				code.add(Multiply);
+				code.add(Add);									//this is the address of a[i]
+			}
+				
+		}
+		
+		public void visitLeave2(IndexNode node) {
+			
+			
 		}
 		
 		///////////////////////////////////////////////////////////////////////////

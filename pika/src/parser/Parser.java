@@ -596,13 +596,30 @@ public class Parser {
 		}
 		readToken();
 		IdentifierNode iden = new IdentifierNode(previouslyRead);
-		if(nowReading.isLextant(Punctuator.OPEN_SQUARE_BRACKET)) {
+		if (nowReading.isLextant(Punctuator.OPEN_SQUARE_BRACKET)) {
 			Token index = nowReading;
+			IndexNode indexnode = new IndexNode(index);
+			indexnode.appendChild(iden);
 			readToken();
 			ParseNode expr = parseExpression();
-			expect(Punctuator.CLOSE_SQUARE_BRACKET);
-			return IndexNode.withChildren(index, iden, expr);
+			indexnode.appendChild(expr);
+			if (nowReading.isLextant(Punctuator.CLOSE_SQUARE_BRACKET)) {
+				readToken();
+				while(nowReading.isLextant(Punctuator.OPEN_SQUARE_BRACKET)) {
+					readToken();
+					ParseNode expr2 = parseExpression();
+					if (nowReading.isLextant(Punctuator.CLOSE_SQUARE_BRACKET)) {
+						indexnode.appendChild(expr2);
+						readToken();
+						continue;
+					}
+				}
+			}
+			System.out.print(indexnode);
+			return indexnode;
 		}
+		
+		
 		return iden;
 	}
 	private boolean startsIdentifier(Token token) {

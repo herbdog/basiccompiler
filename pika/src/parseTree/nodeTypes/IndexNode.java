@@ -29,16 +29,6 @@ public class IndexNode extends ParseNode {
 	}	
 	
 	
-	////////////////////////////////////////////////////////////
-	// convenience factory
-	
-	public static IndexNode withChildren(Token token, ParseNode left, ParseNode right) {
-		IndexNode node = new IndexNode(token);
-		node.appendChild(left);
-		node.appendChild(right);
-		return node;
-	}
-	
 	
 	///////////////////////////////////////////////////////////
 	// boilerplate for visitors

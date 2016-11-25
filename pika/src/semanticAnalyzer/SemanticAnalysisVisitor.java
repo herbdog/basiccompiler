@@ -91,13 +91,28 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 	public void visitLeave(AssignNode node) {
 		IdentifierNode identifier = null;
 		ParseNode left = null;
+		ParseNode right = node.child(1);
+		List<Type> childTypes = null;
+		
+		ParseNode child = node.child(0);
 		if (node.child(0) instanceof IndexNode) {
-			identifier = (IdentifierNode) node.child(0).child(0);
-			left = node.child(0).child(0);
+			child = node.child(0);
+			Type identype = null;
+			while (child instanceof IndexNode) {
+				child = child.child(0);
+			}
+			identifier = (IdentifierNode) child;
+			left = child;
+			identype = identifier.getType();
+			while (!(identype instanceof PrimitiveType)) {
+				identype = identype.getType();
+			}
+			childTypes = Arrays.asList(identype, right.getType().getType());
 		}
 		else {
 			identifier = (IdentifierNode) node.child(0);
 			left = node.child(0);
+			childTypes = Arrays.asList(left.getType().getType().getType(), right.getType().getType());
 		}
 		for (ParseNode nodes : node.pathToRoot()) {
 			for (ParseNode childnodes : nodes.getChildren()) {
@@ -109,14 +124,7 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 				}
 			}
 		}
-		ParseNode right = node.child(1);
-		List<Type> childTypes = null;
- 		if (node.child(0) instanceof IndexNode) {
-			childTypes = Arrays.asList(left.getType().getType().getType().getType(), right.getType().getType());
-		}
-		else {
-			childTypes = Arrays.asList(left.getType().getType().getType(), right.getType().getType());
-		}
+
 		FunctionSignature signature = FunctionSignature.signatureOf(Punctuator.ASSIGN, childTypes);
 		if (signature.accepts(childTypes)) {
 			node.setType(signature.resultType());
@@ -177,10 +185,14 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 	}
 	
 	public void visitLeave(IndexNode node) {
-		assert node.child(0).getType().getType() instanceof ArrayType;
-		assert node.child(1).getType().match(PrimitiveType.INTEGER);
+		ParseNode child = node.child(0);
+		assert child.getType().getType() instanceof ArrayType;
+		for (int i = 1; i < node.nChildren(); i++) {
+			assert node.child(i).getType().getType() == PrimitiveType.INTEGER;
+		}
 		
 		node.setType(node.child(0).getType().getType().getType());
+
 	}
 	
 	public void visitLeave(IfNode node) {
@@ -238,7 +250,17 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		}
 		List<Type> childTypes = null;
 		if (left instanceof IndexNode) {
-			childTypes = Arrays.asList(left.child(0).getType().getType().getType().getType(), right.child(0).getType().getType().getType().getType());
+			ParseNode child = node.child(0);
+			Type identype = null;
+			while (child instanceof IndexNode) {
+				child = child.child(0);
+			}
+			left = child;
+			identype = left.getType();
+			while (!(identype instanceof PrimitiveType)) {
+				identype = identype.getType();
+			}
+			childTypes = Arrays.asList(identype, right.getType().getType());
 		}
 		else {
 			childTypes = Arrays.asList(left.getType().getType(), right.getType().getType());
