@@ -120,6 +120,12 @@ public class Parser {
 		if(startsWhile(nowReading)) {
 			return parseWhile();
 		}
+		if(startsBreak(nowReading)) {
+			return parseBreak();
+		}
+		if(startsContinue(nowReading)) {
+			return parseContinue();
+		}
 		if(startsPrintStatement(nowReading)) {
 			return parsePrintStatement();
 		}
@@ -127,7 +133,7 @@ public class Parser {
 	}
 	private boolean startsStatement(Token token) {
 		return startsPrintStatement(token) ||
-			   startsDeclaration(token) || startsBlock(token) || startsAssign(token) || startsIf(token) || startsWhile(token);
+			   startsDeclaration(token) || startsBlock(token) || startsAssign(token) || startsIf(token) || startsWhile(token) || startsBreak(token) || startsContinue(token);
 	}
 	// printStmt -> PRINT printExpressionList .
 	private ParseNode parsePrintStatement() {
@@ -248,6 +254,7 @@ public class Parser {
 		return (token instanceof IdentifierToken);
 	}
 	
+	
 	//if statements 
 	private ParseNode parseIf() {
 		if (!startsIf(nowReading)) {
@@ -293,6 +300,33 @@ public class Parser {
 	}
 	private boolean startsWhile(Token token) {
 		return (token.isLextant(Keyword.WHILE));
+	}
+	
+	private ParseNode parseBreak() {
+		if (!startsBreak(nowReading)) {
+			return syntaxErrorNode("break");
+		}
+		Token breaktoken = nowReading;
+		readToken();
+		expect(Punctuator.TERMINATOR);
+		return new BreakNode(breaktoken);
+	}
+	private boolean startsBreak(Token token) {
+		return (token.isLextant(Keyword.BREAK));
+	}
+	
+	private ParseNode parseContinue() {
+		if (!startsContinue(nowReading)) {
+			return syntaxErrorNode("continue");
+		}
+		Token continuetoken = nowReading;
+		readToken();
+		expect(Punctuator.TERMINATOR);
+		return new ContinueNode(continuetoken);
+	}
+	
+	private boolean startsContinue(Token token) {
+		return (token.isLextant(Keyword.CONTINUE));
 	}
 	// starting keywords for types
 	
@@ -561,7 +595,15 @@ public class Parser {
 			return syntaxErrorNode("identifier");
 		}
 		readToken();
-		return new IdentifierNode(previouslyRead);
+		IdentifierNode iden = new IdentifierNode(previouslyRead);
+		if(nowReading.isLextant(Punctuator.OPEN_SQUARE_BRACKET)) {
+			Token index = nowReading;
+			readToken();
+			ParseNode expr = parseExpression();
+			expect(Punctuator.CLOSE_SQUARE_BRACKET);
+			return IndexNode.withChildren(index, iden, expr);
+		}
+		return iden;
 	}
 	private boolean startsIdentifier(Token token) {
 		return token instanceof IdentifierToken;

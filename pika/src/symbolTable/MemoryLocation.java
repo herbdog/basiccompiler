@@ -1,10 +1,12 @@
 package symbolTable;
 
 import asmCodeGenerator.codeStorage.ASMCodeFragment;
+import asmCodeGenerator.runtime.MemoryManager;
 import asmCodeGenerator.runtime.RunTime;
 
 public class MemoryLocation {
 	public static final String GLOBAL_VARIABLE_BLOCK = RunTime.GLOBAL_MEMORY_BLOCK;
+	public static final String HEAP_VARIABLE_BLOCK = MemoryManager.MEM_MANAGER_ALLOCATE; 	
 	public static final String FRAME_POINTER = "Frame pointer not yet implemented in RunTime.";
 	
 	private MemoryAccessMethod accessor;

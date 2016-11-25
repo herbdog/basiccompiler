@@ -43,6 +43,14 @@ public abstract class ScannerImp implements Scanner {
 		}
 		return false;
 	}
+	
+	public boolean wasIndex() {
+		Token rb = nextToken;
+		if (rb.isLextant(Punctuator.CLOSE_SQUARE_BRACKET)) {
+			return true;
+		}
+		return false;
+	}
 
 	@Override
 	public void remove() {

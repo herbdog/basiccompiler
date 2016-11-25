@@ -5,12 +5,34 @@
         DataC        37                        %% "%d"
         DataC        100                       
         DataC        0                         
+        DLabel       $print-format-float       
+        DataC        37                        %% "%g"
+        DataC        103                       
+        DataC        0                         
         DLabel       $print-format-boolean     
         DataC        37                        %% "%s"
         DataC        115                       
         DataC        0                         
+        DLabel       $print-format-string      
+        DataC        37                        %% "%s"
+        DataC        115                       
+        DataC        0                         
+        DLabel       $print-format-character   
+        DataC        37                        %% "%c"
+        DataC        99                        
+        DataC        0                         
+        DLabel       $print-format-rational    
+        DataC        37                        %% "%d"
+        DataC        100                       
+        DataC        0                         
+        DataC        37                        %% "%d"
+        DataC        100                       
+        DataC        0                         
         DLabel       $print-format-newline     
         DataC        10                        %% "\n"
+        DataC        0                         
+        DLabel       $print-format-tab         
+        DataC        9                         %% "\t"
         DataC        0                         
         DLabel       $print-format-space       
         DataC        32                        %% " "

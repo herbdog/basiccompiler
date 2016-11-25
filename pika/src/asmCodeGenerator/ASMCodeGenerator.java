@@ -6,6 +6,7 @@ import java.util.Map;
 import asmCodeGenerator.codeStorage.ASMCodeFragment;
 import asmCodeGenerator.codeStorage.ASMOpcode;
 import asmCodeGenerator.runtime.RunTime;
+import asmCodeGenerator.runtime.MemoryManager;
 import lexicalAnalyzer.Lextant;
 import lexicalAnalyzer.Punctuator;
 import parseTree.*;
@@ -23,6 +24,9 @@ import static asmCodeGenerator.codeStorage.ASMOpcode.*;
 public class ASMCodeGenerator {
 	ParseNode root;
 	public HashMap<String,String> stringlist;
+	public HashMap<String,ParseNode> arraylist;
+	public HashMap<String,String[]> looplist;
+	int offset;
 
 	public static ASMCodeFragment generate(ParseNode syntaxTree) {
 		ASMCodeGenerator codeGenerator = new ASMCodeGenerator(syntaxTree);
@@ -32,14 +36,18 @@ public class ASMCodeGenerator {
 		super();
 		this.root = root;
 		stringlist = new HashMap<String,String>();
+		arraylist = new HashMap<String,ParseNode>();
+		looplist = new HashMap<String,String[]>();
+		offset = 0;
 	}
 	
 	public ASMCodeFragment makeASM() {
 		ASMCodeFragment code = new ASMCodeFragment(GENERATES_VOID);
+		code.append( MemoryManager.codeForInitialization() );
 		code.append( RunTime.getEnvironment() );
 		code.append( globalVariableBlockASM() );
 		code.append( programASM() );
-//		code.append( MemoryManager.codeForAfterApplication() );
+		code.append( MemoryManager.codeForAfterApplication() );
 		
 		return code;
 	}
@@ -139,7 +147,7 @@ public class ASMCodeGenerator {
 				code.add(LoadC);
 			}	
 			else if(node.getType().getType().getType() == PrimitiveType.STRING) {
-				code.add(Nop);
+				code.add(LoadI);
 			}
 			else if(node.getType().getType().getType() == PrimitiveType.CHAR) {
 				code.add(LoadC);
@@ -153,49 +161,7 @@ public class ASMCodeGenerator {
 				code.add(LoadI);
 			}
 			else if(node.getType().getType() instanceof ArrayType) {
-				Labeller traverse = new Labeller("traverse");
-				String start = traverse.newLabel("start");
-				String end = traverse.newLabel("end");
-				
-				code.add(Duplicate);
-				code.add(PushI, 8); 
-				code.add(LoadI); 		//subtype size
-				code.add(PushI, 30004);
-				code.add(Exchange);
-				code.add(StoreI);
-				code.add(Duplicate);
-				code.add(PushI, 12);
 				code.add(LoadI);
-				code.add(Duplicate);
-				code.add(PushI, 30000);
-				code.add(Exchange);
-				code.add(StoreI);
-				code.add(PushI, 30012);
-				code.add(Exchange);
-				code.add(StoreI);
-				code.add(PushI, 16);	// length, first location
-				code.add(Add);
-				
-				code.add(Label, start);
-				code.add(Duplicate);
-				code.add(LoadI);
-				code.add(Exchange);
-				code.add(PushI, 30004);
-				code.add(LoadI);
-				code.add(Add);
-				code.add(PushI, 30000);
-				code.add(LoadI);
-				code.add(PushI, 1);
-				code.add(Subtract);
-				code.add(Duplicate);
-				code.add(PushI, 30000);
-				code.add(Exchange);
-				code.add(StoreI);
-				code.add(JumpTrue, start);
-				code.add(Jump, end);
-				
-				code.add(Label, end);
-				
 			}
 			else {
 				assert false : "node " + node;
@@ -240,7 +206,7 @@ public class ASMCodeGenerator {
 
 		public void visitLeave(PrintStatementNode node) {
 			newVoidCode(node);
-			new PrintStatementGenerator(code, this, stringlist).generate(node);	
+			new PrintStatementGenerator(code, this, stringlist, arraylist).generate(node);	
 		}
 		public void visit(NewlineNode node) {
 			newVoidCode(node);
@@ -280,6 +246,7 @@ public class ASMCodeGenerator {
 				code.add(StoreI);
 			}
 			else {
+				IdentifierNode idennode = (IdentifierNode) node.child(0);
 				if(node.child(1).getType().getType() == PrimitiveType.STRING) {
 					if(node.child(1).getToken().toString().contains("CAST")) {
 						ParseNode tempnode = node.child(1);
@@ -287,18 +254,27 @@ public class ASMCodeGenerator {
 							tempnode = tempnode.child(0);
 						}
 						String label = stringlist.get(tempnode.getToken().getLexeme().replaceAll("\"", ""));
-						stringlist.put(node.child(0).getToken().getLexeme().toString(), label);
+						stringlist.put(idennode.findVariableBinding().toString(), label);
 					}
 					else {
 						String label = stringlist.get(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
-						stringlist.remove(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
-						stringlist.put(node.child(0).getToken().getLexeme(),label);
+						stringlist.put(idennode.findVariableBinding().toString(),label);
 					}
+				}
+				else if (node.child(1).getType().getType() instanceof ArrayType) {
+					arraylist.put(idennode.findVariableBinding().toString(),node.child(1));
 				}
 			
 				code.append(lvalue);
 				code.append(rvalue);
-				Type type = node.getType().getType().getType();
+				Type type = null;
+				if (node.child(1) instanceof IndexNode) {
+					removeValueCode(node.child(1).child(0));
+					type = node.child(1).child(0).getType().getType();
+				}
+				else {
+					type = node.getType().getType().getType();
+				}
 				code.add(opcodeForStore(type));
 			}
 		}
@@ -313,13 +289,13 @@ public class ASMCodeGenerator {
 				return StoreC;
 			}
 			if(type == PrimitiveType.STRING) {
-				return Nop;
+				return StoreI;
 			}
 			if(type == PrimitiveType.CHAR) {
 				return StoreC;
 			}
 			if(type instanceof ArrayType) {
-				return Nop;
+				return StoreI;
 			}
 			assert false: "Type " + type + " unimplemented in opcodeForStore()";
 			return null;
@@ -407,17 +383,18 @@ public class ASMCodeGenerator {
 			}
 			else {
 				if(node.child(1).getType().getType() == PrimitiveType.STRING) {
-					if(node.child(1).getToken().toString().contains("CAST")) {
-						String temp = stringlist.get(stringlist.size()-1);
-						String temp2 = node.child(0).getToken().getLexeme().toString();
-						String label = stringlist.get(temp);
-						stringlist.remove(temp);
-						stringlist.put(temp.concat(temp2), label);
+					IdentifierNode idennode = (IdentifierNode) node.child(0);
+					ParseNode childnode = node.child(1);
+					if (childnode instanceof BinaryOperatorNode) {
+						while (childnode instanceof BinaryOperatorNode) {
+							childnode = childnode.child(0);
+						}
+						String label1 = stringlist.get(childnode.getToken().getLexeme().replaceAll("\"", ""));
+						stringlist.put(idennode.findVariableBinding().toString(),label1);
 					}
 					else {
-						String label = stringlist.get(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
-						stringlist.remove(node.child(1).getToken().getLexeme().replaceAll("\"", ""));
-						stringlist.put(node.child(0).getToken().getLexeme(),label);
+						String label = stringlist.get(idennode.getDeclarationScope().toString());
+						stringlist.put(idennode.findVariableBinding().toString(),label);
 					}
 				}
 				
@@ -508,20 +485,101 @@ public class ASMCodeGenerator {
 			ASMCodeFragment exprval = removeValueCode(node.child(0));
 			ASMCodeFragment block = removeVoidCode(node.child(1));
 			
-			Labeller label = new Labeller("while");
+			String[] labels = looplist.get(node.getLocalScope().toString());
 			
-			String startLabel = label.newLabel("start");
-			String blockLabel = label.newLabel("block");
-			String endLabel = label.newLabel("end");
+			if (labels != null) {
+				String startLabel = labels[0];
+				String blockLabel = labels[1];
+				String endLabel = labels[2];
+				
+				code.add(Label, startLabel);
+				code.append(exprval);
+				code.add(JumpFalse, endLabel);
+				code.add(Label, blockLabel);
+				code.append(block);
+				code.add(Jump, startLabel);
+				
+				code.add(Label, endLabel);
+			}
+			else {
+				Labeller label = new Labeller("while");
+				
+				String startLabel = label.newLabel("start");
+				String blockLabel = label.newLabel("block");
+				String endLabel = label.newLabel("end");
+				
+				code.add(Label, startLabel);
+				code.append(exprval);
+				code.add(JumpFalse, endLabel);
+				code.add(Label, blockLabel);
+				code.append(block);
+				code.add(Jump, startLabel);
+				
+				code.add(Label, endLabel);
+			}
+		}
+		
+		public void visit(BreakNode node) {
+			newVoidCode(node);
 			
-			code.add(Label, startLabel);
-			code.append(exprval);
-			code.add(JumpFalse, endLabel);
-			code.add(Label, blockLabel);
-			code.append(block);
-			code.add(Jump, startLabel);
+			String[] labels = null;
+			for (ParseNode nodes : node.pathToRoot()) {
+				if (nodes instanceof WhileNode) {
+					labels = looplist.get(nodes.getLocalScope().toString());
+					break;
+				}
+			}
 			
-			code.add(Label, endLabel);
+			if (labels == null) {
+				Labeller label = new Labeller("while");
+				
+				String startLabel = label.newLabel("start");
+				String blockLabel = label.newLabel("block");
+				String endLabel = label.newLabel("end");
+				String[] labels1 = {startLabel, blockLabel, endLabel};
+				for (ParseNode nodes : node.pathToRoot()) {
+					if (nodes instanceof WhileNode) {
+						looplist.put(nodes.getLocalScope().toString(),labels1);
+						break;
+					}
+				}
+				code.add(Jump, endLabel);
+			}
+			else {
+				code.add(Jump, labels[2]);
+			}
+		}
+		
+		public void visit(ContinueNode node) {
+			newVoidCode(node);
+			
+			String[] labels = null;
+			for (ParseNode nodes : node.pathToRoot()) {
+				if (nodes instanceof WhileNode) {
+					labels = looplist.get(nodes.getLocalScope().toString());
+					break;
+				}
+			}
+			
+			if (labels == null) {
+				Labeller label = new Labeller("while");
+				
+				String startLabel = label.newLabel("start");
+				String blockLabel = label.newLabel("block");
+				String endLabel = label.newLabel("end");
+				String[] labels1 = {startLabel, blockLabel, endLabel};
+				for (ParseNode nodes : node.pathToRoot()) {
+					if (nodes instanceof WhileNode) {
+						looplist.put(nodes.getLocalScope().toString(),labels1);
+						break;
+					}
+				}
+				code.add(Jump, startLabel);
+			}
+			else {
+				code.add(Jump, labels[0]);
+			}
+			
 		}
 		///////////////////////////////////////////////////////////////////////////
 		// expressions
@@ -974,11 +1032,19 @@ public class ASMCodeGenerator {
 			newValueCode(node);
 			ASMCodeFragment arg1 = removeValueCode(node.child(0));
 			ASMCodeFragment arg2 = removeValueCode(node.child(1));
-			Type arg1type = node.child(0).getType().getType();
-			Type arg2type = node.child(1).getType().getType();
+			Type arg1type = null;
+			Type arg2type = null;
 			String arg1pred = node.child(0).toString().split("\n")[0];
 			String arg2pred = node.child(1).toString().split("\n")[0];
+			
 			code.append(arg1);
+			if (node.child(0) instanceof IndexNode) {
+				removeValueCode(node.child(0).child(0));
+				arg1type = node.child(0).child(0).getType().getType().getType().getType();
+			}
+			else {
+				arg1type = node.child(0).getType().getType();
+			}
 			if (arg1type == PrimitiveType.INTEGER) {
 				if (arg1pred.contains("FloatConstantNode")) {
 					code.add(ConvertI);
@@ -1071,7 +1137,13 @@ public class ASMCodeGenerator {
 			else {
 				code.append(arg2);
 			}
-			
+			if (node.child(1) instanceof IndexNode) {
+				removeValueCode(node.child(1).child(0));
+				arg2type = node.child(1).child(0).getType().getType().getType().getType();
+			}
+			else {
+				arg2type = node.child(1).child(0).getType().getType();
+			}
 			
 			ASMOpcode opcode = opcodeForOperator(node.getOperator(),arg1type,arg2type);
 			code.add(opcode);							// type-dependent! (opcode is different for floats and for ints)
@@ -1354,6 +1426,11 @@ public class ASMCodeGenerator {
 		public void visitLeave(ArrayNode node) {
 			newAddressCode(node);
 			newValueCode(node);
+			
+			visitLeave2(node);
+		}
+		
+		public void visitLeave2(ArrayNode node) {
 			Labeller label = new Labeller("array");
 			String typeid = label.newLabel("typeid");
 			String status = label.newLabel("status");
@@ -1361,7 +1438,13 @@ public class ASMCodeGenerator {
 			String subtypesize = label.newLabel("subtypesize");
 			String data = label.newLabel("data");
 			Type argtype = node.child(0).getType().getType();
-			
+			arraylist.put(node.toString(), node);
+
+			code.add(PushD, MemoryManager.MEM_MANAGER_ALLOCATE);
+			code.add(PushI, offset);
+			code.add(Add);
+			code.add(Duplicate);
+			code.add(DataZ, 16 + node.getType().getType().getSize() * node.nChildren());
 			code.add(Label, typeid);
 			code.add(Duplicate);
 			code.add(PushI, 4);
@@ -1385,70 +1468,208 @@ public class ASMCodeGenerator {
 			code.add(StoreI);
 			code.add(Label, length);
 			code.add(Duplicate);
-			code.add(PushI, node.nChildren());
+			code.add(PushI, 4);
 			code.add(Add);
 			code.add(Exchange);
-			code.add(PushI, 4);
+			code.add(PushI, node.nChildren());
 			code.add(StoreI);	
 			code.add(Label, data);
+
+			offset = offset + (16 + argtype.getSize()*node.nChildren());
 			
-			for(int i = 0; i < node.nChildren(); i ++) {
-				argtype = node.child(i).getType().getType();
-				String argpred = node.child(i).toString().split("\n")[0];
-				ASMCodeFragment value = removeValueCode(node.child(i));
-				
+			for(ParseNode childnodes : node.getChildren()) {
+
 				code.add(Duplicate);
 				code.add(PushI, argtype.getSize());
 				code.add(Add);
 				code.add(Exchange);
-				code.append(value);
 				
-				if (argtype == PrimitiveType.INTEGER) {
-					if (argpred.contains("FloatConstantNode")) {
-						code.add(ConvertI);
-					}
-					else if (argpred.contains("CharacterConstantNode")) {
-					}
-					else if (argpred.contains("BinaryOperatorNode (OVER)")) {
-						code.add(Divide);
-					}
+				if (childnodes instanceof IntegerConstantNode) {
+					code.add(PushI, ((IntegerConstantNode) childnodes).getValue());
 				}
-				else if (argtype == PrimitiveType.FLOAT) {
-					if (argpred.contains("IntegerConstantNode")) {
-						code.add(ConvertF);
-					}
-					else if (argpred.contains("CharacterConstantNode")) {
-						code.add(ConvertF);
-					}
-					else if (argpred.contains("BinaryOperatorNode (OVER)")) {
-						code.add(Divide);
-						code.add(ConvertF);
-					}
+				else if (childnodes instanceof FloatConstantNode) {
+					code.add(PushF, ((FloatConstantNode) childnodes).getValue());
 				}
-				else if (argtype == PrimitiveType.CHAR) {
-					if (argpred.contains("IntegerConstantNode")) {
-					}
-					else if (argpred.contains("FloatConstantNode")) {
-						code.add(ConvertI);
-					}
-					else if (argpred.contains("BinaryOperatorNode (OVER)")) {
-						code.add(Divide);
-					}
+				else if (childnodes instanceof CharacterConstantNode) {
+					code.add(PushI, ((CharacterConstantNode) childnodes).getValue());
 				}
-				else if (argtype == PrimitiveType.RATIONAL) {
-					if (argpred.contains("IntegerConstantNode")) {
-						code.add(PushI, 1);
+				else if (childnodes instanceof StringConstantNode) {
+					visit2((StringConstantNode) childnodes);
+				}
+				else if (childnodes instanceof BooleanConstantNode) {
+					code.add(PushI, ((BooleanConstantNode) childnodes).getValue() ? 1 : 0);
+				}
+				else if (childnodes instanceof BinaryOperatorNode) {
+					code.add(Duplicate);
+					code.add(PushI, 4);
+					code.add(Add);
+					
+					BinaryOperatorNode bnode = (BinaryOperatorNode) childnodes;
+					ASMCodeFragment arg1 = removeValueCode(childnodes.child(0));
+					ASMCodeFragment arg2 = removeValueCode(childnodes.child(1));
+					Type arg1type = childnodes.child(0).getType().getType();
+					Type arg2type = childnodes.child(1).getType().getType();
+					String arg1pred = childnodes.child(0).toString().split("\n")[0];
+					String arg2pred = childnodes.child(1).toString().split("\n")[0];
+					code.append(arg1);
+					if (arg1type == PrimitiveType.INTEGER) {
+						if (arg1pred.contains("FloatConstantNode")) {
+							code.add(ConvertI);
+							code.append(arg2);
+							if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+								code.add(Divide);
+						}
+						else if (arg1pred.contains("CharacterConstantNode")) {
+							code.append(arg2);
+							if (arg2pred.contains("FloatConstantNode"))
+								code.add(ConvertI);
+							else if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+								code.add(Divide);
+						}
+						else if ((arg1pred.contains("BinaryOperatorNode (OVER)")) && (!childnodes.getToken().isLextant(Punctuator.OVER))) {
+							code.add(Divide);
+							code.append(arg2);
+							if (arg2pred.contains("FloatConstantNode"))
+								code.add(ConvertI);
+						}
+						else if (childnodes.child(0).nChildren() > 0) {
+							if (childnodes.child(0).child(0).getType() == PrimitiveType.FLOAT) {
+								code.add(ConvertI);
+								code.append(arg2);
+								if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+									code.add(Divide);
+								else if (arg2pred.contains("FloatConstantNode"))
+									code.add(ConvertI);
+							}
+							else if (childnodes.child(0).child(0).getType() == PrimitiveType.CHAR) {
+								code.append(arg2);
+								if (arg2pred.contains("FloatConstantNode"))
+									code.add(ConvertI);
+								else if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+									code.add(Divide);
+							}
+							else if (childnodes.child(0).child(0).getType() == PrimitiveType.RATIONAL) {
+								code.add(Divide);
+								code.append(arg2);
+							}
+							else {
+								code.append(arg2);
+							}
+						}
+						else {
+							code.append(arg2);
+						}
 					}
-					else if (argpred.contains("CharacterConstantNode")) {
-						code.add(PushI, 1);
+					else if (arg1type == PrimitiveType.FLOAT) {
+						if (childnodes.child(0).nChildren() > 0) {
+							if (node.child(0).child(0).getType() == PrimitiveType.INTEGER) {
+								code.add(ConvertF);
+								code.append(arg2);
+								if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+									code.add(Divide);
+							}
+						}
+						else if ((arg1pred.contains("IntegerConstantNode"))) {
+							code.add(ConvertF);
+							code.append(arg2);
+							if (arg2pred.contains("BinaryOperatorNode (OVER)"))
+								code.add(Divide);
+						}
+						else {
+							code.append(arg2);
+						}
 					}
-					else if (argpred.contains("FloatConstantNode")) {
-						castfrational();
+					else if (arg1type == PrimitiveType.RATIONAL) {
+						if (arg1pred.contains("IntegerConstantNode")) {
+							code.add(PushI, 1);
+							code.append(arg2);
+							if (arg2pred.contains("FloatConstantNode"))
+								code.add(ConvertI);
+						}
+						else if (childnodes.child(0).nChildren() > 0) {
+							if ((childnodes.child(0).child(0).getType() == PrimitiveType.INTEGER) && (!childnodes.child(0).getToken().isLextant(Punctuator.OVER))) {
+								code.add(PushI, 1);
+								code.append(arg2);
+								if (arg2pred.contains("FloatConstantNode"))
+									code.add(ConvertI);
+							}
+							else {
+								code.append(arg2);
+							}
+						}
+						else {
+							code.append(arg2);
+						}
 					}
+					else {
+						code.append(arg2);
+					}
+					
+					
+					ASMOpcode opcode = opcodeForOperator(bnode.getOperator(),arg1type,arg2type);
+					code.add(opcode);
+					
+					code.add(Duplicate);
+					code.add(PushI, 11000);
+					code.add(Exchange);
+					code.add(StoreI);
+					code.add(Pop);
+					code.add(StoreI);
+					code.add(PushI, 11000);
+					code.add(LoadI);
+					code.add(StoreI);
+					continue;
+				}
+				else if (childnodes.getType().getType() instanceof ArrayType) {
+					ArrayNode constantnode = (ArrayNode) childnodes;
+					visitLeave2(constantnode);
 				}
 				code.add(opcodeForStore(argtype));
 			}
 			code.add(Pop);
+		}
+		
+		public void visitLeave(IndexNode node) {
+			newAddressCode(node);
+			IdentifierNode iden = (IdentifierNode) node.child(0);
+			ASMCodeFragment index = removeValueCode(node.child(1));
+			
+			Binding binding = iden.getBinding();
+			binding.generateAddress(code);
+			code.add(LoadI);
+			code.add(Duplicate);
+			code.add(PushI, 90000);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(PushI, 12);
+			code.add(Add);
+			code.add(LoadI);
+			code.add(PushI, 1);
+			code.add(Subtract);								//highest index possible
+			code.append(index);
+			code.add(Duplicate);
+			code.add(PushI, 76000);
+			code.add(Exchange);
+			code.add(StoreI);
+			code.add(JumpNeg, "$$index-out-of-range");		//negative index
+			code.add(PushI, 76000);
+			code.add(LoadI);
+			code.add(Subtract);								//if it is less than 0, it is out of range
+			code.add(JumpNeg, "$$index-out-of-range");
+			
+			code.add(PushI, 90000);
+			code.add(LoadI);
+			code.add(PushI, 16);
+			code.add(Add);
+			code.add(PushI, 76000);
+			code.add(LoadI);
+			code.add(PushI, 90000);
+			code.add(LoadI);
+			code.add(PushI, 8);
+			code.add(Add);
+			code.add(LoadI);
+			code.add(Multiply);
+			code.add(Add);									//this is the address of a[i]
 		}
 		
 		///////////////////////////////////////////////////////////////////////////
@@ -1462,7 +1683,7 @@ public class ASMCodeGenerator {
 			Binding binding = node.getBinding();
 			
 			binding.generateAddress(code);
-		}		
+		}
 		public void visit(IntegerConstantNode node) {
 			newValueCode(node);
 
@@ -1476,10 +1697,19 @@ public class ASMCodeGenerator {
 		public void visit(StringConstantNode node) {
 			newAddressCode(node);
 			newValueCode(node);
+			
+			visit2(node);
+		}
+		public void visit2(StringConstantNode node) {
 			Labeller label = new Labeller("StringConstant");
 			stringlist.put(node.getValue(), label.newLabel(""));
+			code.add(PushD, MemoryManager.MEM_MANAGER_ALLOCATE);
+			code.add(PushI, offset);
+			code.add(Add);
 			code.add(DLabel, label.newLabel(""));
 			code.add(DataS, node.getValue());
+			
+			offset = offset + node.getValue().length();
 		}
 		public void visit(CharacterConstantNode node) {
 			newValueCode(node);

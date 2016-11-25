@@ -1,11 +1,9 @@
 package semanticAnalyzer;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import asmCodeGenerator.codeStorage.ASMOpcode;
 import lexicalAnalyzer.Keyword;
 import lexicalAnalyzer.Lextant;
 import lexicalAnalyzer.Punctuator;
@@ -14,12 +12,10 @@ import parseTree.ParseNode;
 import parseTree.ParseNodeVisitor;
 import parseTree.nodeTypes.*;
 import semanticAnalyzer.signatures.FunctionSignature;
-import semanticAnalyzer.signatures.FunctionSignatures;
 import semanticAnalyzer.types.ArrayType;
 import semanticAnalyzer.types.PrimitiveType;
 import semanticAnalyzer.types.Type;
 import semanticAnalyzer.types.TypeLiteral;
-import semanticAnalyzer.types.TypeVariable;
 import symbolTable.Binding;
 import symbolTable.Scope;
 import tokens.LextantToken;
@@ -76,6 +72,7 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 	@Override
 	public void visitLeave(DeclarationNode node) {
 		IdentifierNode identifier = (IdentifierNode) node.child(0);
+		ParseNode blocknode = node.getParent();
 		ParseNode initializer = node.child(1);
 		
 		Type declarationType = initializer.getType();
@@ -83,23 +80,43 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		
 		identifier.setType(declarationType);
 		addBinding(identifier, declarationType);
+		while ((blocknode instanceof BlockNode) || (blocknode instanceof IfNode) || (blocknode instanceof WhileNode)) {
+			if (blocknode.getParent().containsBindingOf(identifier.getToken().getLexeme())) {
+				logError("Variable " + identifier.getToken().getLexeme() + "cannot be declared in this scope because the value cannot be decided");
+			}
+			blocknode = blocknode.getParent();
+		}
 	}
 	
 	public void visitLeave(AssignNode node) {
-		CharSequence Decnode = "DeclarationNode (CONST)";
-		CharSequence identifiernode = "IdentifierNode";
-		CharSequence variablename = node.child(0).getToken().getLexeme();
-		for (ParseNode globalnode : node.pathToRoot()) {
-			for (int i = 0; i < globalnode.getChildren().size(); i++) {
-				ParseNode localnode = globalnode.child(i);
-				if ((localnode.getScope() == node.getScope()) && (localnode.toString().contains(Decnode)) && (localnode.toString().contains(identifiernode)) && (localnode.toString().contains(variablename))) {
-					logError("identifier declared as const may not be reassigned");
+		IdentifierNode identifier = null;
+		ParseNode left = null;
+		if (node.child(0) instanceof IndexNode) {
+			identifier = (IdentifierNode) node.child(0).child(0);
+			left = node.child(0).child(0);
+		}
+		else {
+			identifier = (IdentifierNode) node.child(0);
+			left = node.child(0);
+		}
+		for (ParseNode nodes : node.pathToRoot()) {
+			for (ParseNode childnodes : nodes.getChildren()) {
+				if ((childnodes.getLocalScope() == identifier.getDeclarationScope()) && (childnodes instanceof DeclarationNode)) {
+					DeclarationNode decnode = (DeclarationNode) childnodes;
+					if (decnode.getDeclarationType() == Keyword.CONST) {
+						logError("Can't Assign a const declared variable");
+					}
 				}
 			}
 		}
-		ParseNode left = node.child(0);
 		ParseNode right = node.child(1);
-		List<Type> childTypes = Arrays.asList(left.getType().getType().getType(), right.getType().getType());
+		List<Type> childTypes = null;
+ 		if (node.child(0) instanceof IndexNode) {
+			childTypes = Arrays.asList(left.getType().getType().getType().getType(), right.getType().getType());
+		}
+		else {
+			childTypes = Arrays.asList(left.getType().getType().getType(), right.getType().getType());
+		}
 		FunctionSignature signature = FunctionSignature.signatureOf(Punctuator.ASSIGN, childTypes);
 		if (signature.accepts(childTypes)) {
 			node.setType(signature.resultType());
@@ -159,12 +176,45 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		}
 	}
 	
+	public void visitLeave(IndexNode node) {
+		assert node.child(0).getType().getType() instanceof ArrayType;
+		assert node.child(1).getType().match(PrimitiveType.INTEGER);
+		
+		node.setType(node.child(0).getType().getType().getType());
+	}
+	
 	public void visitLeave(IfNode node) {
 		assert node.child(0).getType().getType() == PrimitiveType.BOOLEAN;
 	}
 	
 	public void visitLeave(WhileNode node) {
 		assert node.child(0).getType().getType() == PrimitiveType.BOOLEAN;
+	}
+	
+	public void visit(BreakNode node) {
+		ParseNode extracheck = node;
+		for (ParseNode nodes : node.pathToRoot()) {
+			extracheck = nodes;
+			if (nodes instanceof WhileNode) {
+				break;
+			}
+		}
+		if (extracheck.getParent() == null) {
+			logError("break statement must be inside of a loop");
+		}
+	}
+	
+	public void visit(ContinueNode node) {
+		ParseNode extracheck = node;
+		for (ParseNode nodes : node.pathToRoot()) {
+			extracheck = nodes;
+			if (nodes instanceof WhileNode) {
+				break;
+			}
+		}
+		if (extracheck.getParent() == null) {
+			logError("continue statement must be inside of a loop");
+		}
 	}
 	///////////////////////////////////////////////////////////////////////////
 	// expressions
@@ -174,22 +224,25 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		ParseNode left  = node.child(0);
 		ParseNode right = node.child(1);
 		if (node.toString().contains("CAST")) {
-			if (left.toString().contains("Identifier")) {
-				CharSequence Decnode = "DeclarationNode (CONST)";
-				CharSequence identifiernode = "IdentifierNode";
-				CharSequence variablename = node.child(0).getToken().getLexeme();
-				for (ParseNode globalnode : node.pathToRoot()) {
-					for (int i = 0; i < globalnode.getChildren().size(); i++) {
-						ParseNode localnode = globalnode.child(i);
-						if ((localnode.getScope() == node.getScope()) && (localnode.toString().contains(Decnode)) && (localnode.toString().contains(identifiernode)) && (localnode.toString().contains(variablename))) {
-							logError("identifier declared as const may not be casted");
+			IdentifierNode identifier = (IdentifierNode) node.child(0);
+			for (ParseNode nodes : node.pathToRoot()) {
+				for (ParseNode childnodes : nodes.getChildren()) {
+					if ((childnodes.getLocalScope() == identifier.getDeclarationScope()) && (childnodes instanceof DeclarationNode)) {
+						DeclarationNode decnode = (DeclarationNode) childnodes;
+						if (decnode.getDeclarationType() == Keyword.CONST) {
+							logError("Can't cast a const declared variable");
 						}
 					}
 				}
 			}
 		}
-		
-		List<Type> childTypes = Arrays.asList(left.getType().getType(), right.getType().getType());
+		List<Type> childTypes = null;
+		if (left instanceof IndexNode) {
+			childTypes = Arrays.asList(left.child(0).getType().getType().getType().getType(), right.child(0).getType().getType().getType().getType());
+		}
+		else {
+			childTypes = Arrays.asList(left.getType().getType(), right.getType().getType());
+		}
 		Lextant operator = operatorFor(node);
 		FunctionSignature signature = FunctionSignature.signatureOf(operator, childTypes);
 		

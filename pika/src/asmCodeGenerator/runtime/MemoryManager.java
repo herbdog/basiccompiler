@@ -217,7 +217,7 @@ public class MemoryManager {
 		frag.add(Label, MEM_MANAGER_ALLOCATE);		// [... usableSize (return)]
 
 		declareI(frag, MMGR_ALLOC_RETURN_ADDRESS);
-		declareI(frag, MMGR_ALLOC_SIZE);
+		declareI(frag, MMGR_ALLOC_SIZE);	
 		declareI(frag, MMGR_ALLOC_CURRENT_BLOCK);
 		declareI(frag, MMGR_ALLOC_REMAINDER_BLOCK);
 		declareI(frag, MMGR_ALLOC_REMAINDER_SIZE);
@@ -299,7 +299,7 @@ public class MemoryManager {
 			storeITo(frag, MMGR_ALLOC_REMAINDER_SIZE);		// [...]
 			
 //			debugPrintI(frag, "alloc-current-block:   ", MMGR_ALLOC_CURRENT_BLOCK);
-//			debugPrintI(frag, "alloc-current-size:    ", MMGR_ALLOC_SIZE);
+
 //			debugPrintI(frag, "alloc-remainder-block: ", MMGR_ALLOC_REMAINDER_BLOCK);
 //			debugPrintI(frag, "alloc-remainder-size:  ", MMGR_ALLOC_REMAINDER_SIZE);
 			
@@ -649,7 +649,7 @@ public class MemoryManager {
 
 	// prints top of stack 
 	// [... t] -> [... t]
-	@SuppressWarnings("unused")
+	
 	private static void debugPeekI(ASMCodeFragment frag, String printString) {
 		String label = new Labeller("$$debug-peekI").newLabel("");
 		frag.add(DLabel, label);
@@ -668,7 +668,7 @@ public class MemoryManager {
 		frag.add(PushD, MMGRD_FORMAT_FOR_STRING);
 		frag.add(Printf);
 	}	
-	@SuppressWarnings("unused")
+	
 	private static void debugPrintI(ASMCodeFragment frag, String printString, String name) {
 		String label = new Labeller("$$debug-printI").newLabel("");
 		loadIFrom(frag, name);
