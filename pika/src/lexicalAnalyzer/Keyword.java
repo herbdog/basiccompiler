@@ -23,8 +23,13 @@ public enum Keyword implements Lextant {
 	ELSE("else"),
 	WHILE("while"),
 	NEW("new"),
+	FUNCTION("func"),
+	VOID("void"),
+	RETURN("return"),
+	CALL("call"),
 	BREAK("break"),
 	CONTINUE("continue"),
+	LENGTH("length"),
 	NULL_KEYWORD("");
 
 	private String lexeme;

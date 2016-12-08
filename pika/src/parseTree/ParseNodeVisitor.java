@@ -48,7 +48,27 @@ public interface ParseNodeVisitor {
 	void visitEnter(ProgramNode node);
 	void visitLeave(ProgramNode node);
 
-
+	void visitEnter(FunctionNode node);
+	void visitLeave(FunctionNode node);
+	
+	void visitEnter(LambdaNode node);
+	void visitLeave(LambdaNode node);
+	
+	void visitEnter(LambdaParamType node);
+	void visitLeave(LambdaParamType node);
+	
+	void visitEnter(ParameterSpecification node);
+	void visitLeave(ParameterSpecification node);
+	
+	void visitEnter(ParamList node);
+	void visitLeave(ParamList node);
+	
+	void visitEnter(ReturnNode node);
+	void visitLeave(ReturnNode node);
+	
+	void visitEnter(LengthNode node);
+	void visitLeave(LengthNode node);
+	
 	// leaf nodes: visitLeaf only
 	void visit(BooleanConstantNode node);
 	void visit(ErrorNode node);
@@ -159,7 +179,48 @@ public interface ParseNodeVisitor {
 		public void visitLeave(ProgramNode node) {
 			defaultVisitLeave(node);
 		}
-		
+		public void visitEnter(FunctionNode node) {
+			defaultVisitEnter(node);
+		}
+		public void visitLeave(FunctionNode node) {
+			defaultVisitLeave(node);
+		}
+		public void visitEnter(LambdaNode node) {
+			defaultVisitEnter(node);
+		}
+		public void visitLeave(LambdaNode node) {
+			defaultVisitLeave(node);
+		}
+		public void visitEnter(LambdaParamType node) {
+			defaultVisitEnter(node);
+		}
+		public void visitLeave(LambdaParamType node) {
+			defaultVisitLeave(node);
+		}
+		public void visitEnter(ParameterSpecification node) {
+			defaultVisitEnter(node);
+		}
+		public void visitLeave(ParameterSpecification node) {
+			defaultVisitLeave(node);
+		}
+		public void visitEnter(ParamList node) {
+			defaultVisitEnter(node);
+		}
+		public void visitLeave(ParamList node) {
+			defaultVisitLeave(node);
+		}
+		public void visitEnter(ReturnNode node) {
+			defaultVisitEnter(node);
+		}
+		public void visitLeave(ReturnNode node) {
+			defaultVisitLeave(node);
+		}
+		public void visitEnter(LengthNode node) {
+			defaultVisitEnter(node);
+		}
+		public void visitLeave(LengthNode node) {
+			defaultVisitLeave(node);
+		}
 
 		public void visit(BooleanConstantNode node) {
 			defaultVisitForLeaf(node);

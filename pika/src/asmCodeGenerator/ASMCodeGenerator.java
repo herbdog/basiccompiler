@@ -1,9 +1,6 @@
 package asmCodeGenerator;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import asmCodeGenerator.codeStorage.ASMCodeFragment;
@@ -202,6 +199,12 @@ public class ASMCodeGenerator {
 				ASMCodeFragment childCode = removeVoidCode(child);
 				code.append(childCode);
 			}
+		}
+		public void visitLeave(FunctionNode node) {
+			newVoidCode(node);
+		}
+		public void visitLeave(ReturnNode node) {
+			newVoidCode(node);
 		}
 
 		///////////////////////////////////////////////////////////////////////////
@@ -1145,7 +1148,9 @@ public class ASMCodeGenerator {
 				arg2type = node.child(1).child(0).getType().getType().getType().getType();
 			}
 			else {
-				arg2type = node.child(1).child(0).getType().getType();
+				if (!(node.getParent() instanceof ReturnNode)) {
+					arg2type = node.child(1).child(0).getType().getType();
+				}
 			}
 			
 			ASMOpcode opcode = opcodeForOperator(node.getOperator(),arg1type,arg2type);
@@ -1643,47 +1648,74 @@ public class ASMCodeGenerator {
 			Binding binding = iden.getBinding();
 			binding.generateAddress(code);
 			
-			for(int i = 1; i < node.nChildren(); i++) {
+			if (child.getType().getType() instanceof ArrayType) {
+				for(int i = 1; i < node.nChildren(); i++) {
+					code.add(LoadI);
+					code.add(Duplicate);
+					code.add(PushI, 90000);
+					code.add(Exchange);
+					code.add(StoreI);
+					code.add(PushI, 12);
+					code.add(Add);
+					code.add(LoadI);
+					code.add(PushI, 1);
+					code.add(Subtract);								//highest index possible
+					code.append(removeValueCode(node.child(i)));
+					code.add(Duplicate);
+					code.add(PushI, 76000);
+					code.add(Exchange);
+					code.add(StoreI);
+					code.add(JumpNeg, "$$index-out-of-range");		//negative index
+					code.add(PushI, 76000);
+					code.add(LoadI);
+					code.add(Subtract);								//if it is less than 0, it is out of range
+					code.add(JumpNeg, "$$index-out-of-range");
+					
+					code.add(PushI, 90000);
+					code.add(LoadI);
+					code.add(PushI, 16);
+					code.add(Add);
+					code.add(PushI, 76000);
+					code.add(LoadI);
+					code.add(PushI, 90000);
+					code.add(LoadI);
+					code.add(PushI, 8);
+					code.add(Add);
+					code.add(LoadI);
+					code.add(Multiply);
+					code.add(Add);									//this is the address of a[i]
+				}
+			}
+			else {
 				code.add(LoadI);
 				code.add(Duplicate);
+				code.add(PushI, 4);
+				code.add(Subtract);
+				code.add(LoadI);
+				code.add(Duplicate);
+				code.append(removeValueCode(node.child(1)));
 				code.add(PushI, 90000);
 				code.add(Exchange);
 				code.add(StoreI);
-				code.add(PushI, 12);
-				code.add(Add);
-				code.add(LoadI);
-				code.add(PushI, 1);
-				code.add(Subtract);								//highest index possible
-				code.append(removeValueCode(node.child(i)));
-				code.add(Duplicate);
-				code.add(PushI, 76000);
 				code.add(Exchange);
-				code.add(StoreI);
-				code.add(JumpNeg, "$$index-out-of-range");		//negative index
-				code.add(PushI, 76000);
-				code.add(LoadI);
-				code.add(Subtract);								//if it is less than 0, it is out of range
+				code.add(Subtract);
 				code.add(JumpNeg, "$$index-out-of-range");
 				
 				code.add(PushI, 90000);
 				code.add(LoadI);
-				code.add(PushI, 16);
 				code.add(Add);
-				code.add(PushI, 76000);
-				code.add(LoadI);
-				code.add(PushI, 90000);
-				code.add(LoadI);
-				code.add(PushI, 8);
-				code.add(Add);
-				code.add(LoadI);
-				code.add(Multiply);
-				code.add(Add);									//this is the address of a[i]
+				code.add(LoadC);
 			}
-				
 		}
 		
-		public void visitLeave2(IndexNode node) {
+		public void visitLeave(LengthNode node) {
+			newValueCode(node);
+			ASMCodeFragment arg1 = removeValueCode(node.child(0));
 			
+			code.append(arg1);
+			code.add(PushI, 4);
+			code.add(Subtract);
+			code.add(LoadI);
 			
 		}
 		
@@ -1696,7 +1728,7 @@ public class ASMCodeGenerator {
 		public void visit(IdentifierNode node) {
 			newAddressCode(node);
 			Binding binding = node.getBinding();
-			
+
 			binding.generateAddress(code);
 		}
 		public void visit(IntegerConstantNode node) {
@@ -1721,10 +1753,15 @@ public class ASMCodeGenerator {
 			code.add(PushD, MemoryManager.MEM_MANAGER_ALLOCATE);
 			code.add(PushI, offset);
 			code.add(Add);
+			code.add(Duplicate);
+			code.add(PushI, node.getValue().replaceAll("\"", "").length());
+			code.add(StoreI);
+			code.add(PushI, 4);
+			code.add(Add);
 			code.add(DLabel, label.newLabel(""));
 			code.add(DataS, node.getValue());
-			
-			offset = offset + node.getValue().length();
+
+			offset = offset + node.getValue().length() + 4;
 		}
 		public void visit(CharacterConstantNode node) {
 			newValueCode(node);

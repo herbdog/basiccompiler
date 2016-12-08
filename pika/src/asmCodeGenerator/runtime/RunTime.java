@@ -18,6 +18,8 @@ public class RunTime {
 	public static final String GLOBAL_MEMORY_BLOCK    = "$global-memory-block";
 	public static final String USABLE_MEMORY_START    = "$usable-memory-start";
 	public static final String MAIN_PROGRAM_LABEL     = "$$main";
+	public static final String FRAME_POINTER 		  = "$frame-pointer";
+	public static final String STACK_POINTER		  = "$stack-pointer";
 	
 	public static final String GENERAL_RUNTIME_ERROR = "$$general-runtime-error";
 	public static final String INTEGER_DIVIDE_BY_ZERO_RUNTIME_ERROR = "$$i-divide-by-zero";
@@ -29,6 +31,7 @@ public class RunTime {
 		result.append(stringsForPrintf());
 		result.append(runtimeErrors());
 		result.add(DLabel, USABLE_MEMORY_START);
+		
 		return result;
 	}
 	
@@ -37,7 +40,19 @@ public class RunTime {
 		frag.add(Jump, MAIN_PROGRAM_LABEL);
 		return frag;
 	}
+	
+	public ASMCodeFragment jumpToFP() {
+		ASMCodeFragment frag = new ASMCodeFragment(GENERATES_VOID);
+		frag.add(Jump, FRAME_POINTER);
+		return frag;
+	}
 
+	public ASMCodeFragment jumpToSP() {
+		ASMCodeFragment frag = new ASMCodeFragment(GENERATES_VOID);
+		frag.add(Jump, STACK_POINTER);
+		return frag;
+	}
+	
 	private ASMCodeFragment stringsForPrintf() {
 		ASMCodeFragment frag = new ASMCodeFragment(GENERATES_VOID);
 		frag.add(DLabel, EAT_LOCATION_ZERO);

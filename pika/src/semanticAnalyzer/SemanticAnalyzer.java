@@ -16,7 +16,7 @@ public class SemanticAnalyzer {
 	
 	public ParseNode analyze() {
 		ASTree.accept(new SemanticAnalysisVisitor());
-		
+
 		return ASTree;
 	}
 }

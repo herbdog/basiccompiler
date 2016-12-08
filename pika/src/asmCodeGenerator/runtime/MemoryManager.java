@@ -428,11 +428,15 @@ public class MemoryManager {
 		frag.add(Subtract);								// [... block]
 		storeITo(frag, MMGR_DEALLOC_BLOCK);				// [...]
 		
-		// firstFree.prev = block
-		loadIFrom(frag, MMGR_DEALLOC_BLOCK);
-		loadIFrom(frag, MEM_MANAGER_FIRST_FREE_BLOCK);	// [... block firstFree]
-		writeTagPointer(frag);											
-
+		// if(firstFree != 0) { firstFree.prev = block }
+        String bypassLabel = "-mmgr-bypass-firstFree";
+        loadIFrom(frag, MEM_MANAGER_FIRST_FREE_BLOCK);
+        frag.add(JumpFalse, bypassLabel);
+        loadIFrom(frag, MMGR_DEALLOC_BLOCK);
+        loadIFrom(frag, MEM_MANAGER_FIRST_FREE_BLOCK);    // [... block firstFree]
+        writeTagPointer(frag);
+        frag.add(Label, bypassLabel);
+        
 		// block.prev = 0
 		frag.add(PushI, 0);
 		loadIFrom(frag, MMGR_DEALLOC_BLOCK);	// [... 0 block]

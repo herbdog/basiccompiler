@@ -39,7 +39,7 @@ public class LexicalAnalyzer extends ScannerImp implements Scanner {
 			return scanIdentifier(ch);
 		}
 		else if(isPunctuatorStart(ch)) {
-			if (((ch.getCharacter() == '+') || (ch.getCharacter() == '-')) && (!isLiteral()) && (!wasBracket()) && (!wasIndex())) {
+			if (((ch.getCharacter() == '+') || (ch.getCharacter() == '-')) && (!isLiteral()) && (!wasBracket()) && (!wasIndex()) && (!input.peek().isChar('>'))) {
 				return scanNumber(ch);
 			}
 			if ((ch.getCharacter() == '.') && (input.peek().isDigit())) {

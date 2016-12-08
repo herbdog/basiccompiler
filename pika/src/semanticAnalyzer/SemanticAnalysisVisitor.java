@@ -12,10 +12,7 @@ import parseTree.ParseNode;
 import parseTree.ParseNodeVisitor;
 import parseTree.nodeTypes.*;
 import semanticAnalyzer.signatures.FunctionSignature;
-import semanticAnalyzer.types.ArrayType;
-import semanticAnalyzer.types.PrimitiveType;
-import semanticAnalyzer.types.Type;
-import semanticAnalyzer.types.TypeLiteral;
+import semanticAnalyzer.types.*;
 import symbolTable.Binding;
 import symbolTable.Scope;
 import tokens.LextantToken;
@@ -43,7 +40,12 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		leaveScope(node);
 	}
 	public void visitEnter(BlockNode node) {
-		enterSubscope(node);
+		if (node.getParent() instanceof LambdaNode) {
+			enterProcedureScope(node);
+		}
+		else {
+			enterSubscope(node);
+		}
 	}
 	public void visitLeave(BlockNode node) {
 		leaveScope(node);
@@ -55,6 +57,14 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		Scope scope = Scope.createProgramScope();
 		node.setScope(scope);
 	}	
+	private void enterParameterScope(ParseNode node) {
+		Scope scope = Scope.createParameterScope();
+		node.setScope(scope);
+	}
+	private void enterProcedureScope(ParseNode node) {
+		Scope scope = Scope.createProcedureScope();
+		node.setScope(scope);
+	}
 	private void enterSubscope(ParseNode node) {
 		Scope baseScope = node.getLocalScope();
 		Scope scope = baseScope.createSubscope();
@@ -63,7 +73,75 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 	private void leaveScope(ParseNode node) {
 		node.getScope().leave();
 	}
-	
+	public void visitEnter(FunctionNode node) {
+		enterParameterScope(node);
+	}
+	public void visitLeave(FunctionNode node) {		// maybe it should be determined here after it is done rather than before read assignment page
+		IdentifierNode identifier = (IdentifierNode) node.child(0);
+		identifier.setScope(node.getParent().getLocalScope());
+		ParseNode identype = node.child(1).child(0);
+		identifier.setType(identype.getType());
+		addBinding(identifier, identifier.getType().getType());
+		leaveScope(node);
+	}									//in some block node afterwards should be the start of the procedural scope i.e. variables instantiated within the function
+	public void visitLeave(LambdaNode node) {
+	}
+	public void visitEnter(LambdaParamType node) {
+		assert node.nChildren() == 2;
+		Type lambdatype = new LambdaType();
+		node.setType(lambdatype);
+	}
+	public void visitLeave(LambdaParamType node) {
+		Type lambdatype = node.getType().getType();
+		Type returntype = node.child(1).getType().getType();
+		lambdatype.setType(returntype);
+		node.setType(lambdatype);
+	}
+	public void visitLeave(ParamList node) {
+		ParseNode parent = node.getParent();
+		node.setType(parent.getType());
+	}
+	public void visitLeave(ParameterSpecification node) {
+		assert node.nChildren() == 2;
+		IdentifierNode identifier = (IdentifierNode) node.child(1);
+		Type type = node.child(0).getType().getType();
+		ParseNode lambdaparamtype = node.getParent().getParent();
+		Type lambdatype = lambdaparamtype.getType().getType();
+		lambdatype.setType(type);
+		lambdaparamtype.setType(lambdatype);
+		
+		if (type == TypeLiteral.INT) {
+			identifier.setType(PrimitiveType.INTEGER);
+			addBinding(identifier,PrimitiveType.INTEGER);
+		}
+		else if (type == TypeLiteral.FLOAT) {
+			identifier.setType(PrimitiveType.FLOAT);
+			addBinding(identifier,PrimitiveType.FLOAT);
+		}
+		else if (type == TypeLiteral.CHAR) {
+			identifier.setType(PrimitiveType.CHAR);
+			addBinding(identifier,PrimitiveType.CHAR);
+		}
+		else if (type == TypeLiteral.BOOL) {
+			identifier.setType(PrimitiveType.BOOLEAN);
+			addBinding(identifier,PrimitiveType.BOOLEAN);
+		}
+		else if (type == TypeLiteral.STRING) {
+			identifier.setType(PrimitiveType.STRING);
+			addBinding(identifier,PrimitiveType.STRING);
+		}
+		else if (type == TypeLiteral.RAT) {
+			identifier.setType(PrimitiveType.RATIONAL);
+			addBinding(identifier,PrimitiveType.RATIONAL);
+		}
+		else if (type == TypeLiteral.VOID) {
+			logError(type + "can't be used as a parameter type");
+		}
+		node.setType(type);
+	}
+	public void visitLeave(ReturnNode node) {			// match types with lambdatype is necessary
+		
+	}
 	///////////////////////////////////////////////////////////////////////////
 	// statements and declarations
 	@Override
@@ -121,6 +199,9 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 					if (decnode.getDeclarationType() == Keyword.CONST) {
 						logError("Can't Assign a const declared variable");
 					}
+				}
+				else if ((childnodes.getLocalScope() == identifier.getDeclarationScope()) && (childnodes instanceof ParameterSpecification)) {
+					break;
 				}
 			}
 		}
@@ -186,7 +267,7 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 	
 	public void visitLeave(IndexNode node) {
 		ParseNode child = node.child(0);
-		assert child.getType().getType() instanceof ArrayType;
+		assert child.getType().getType() instanceof ArrayType || child.getType().match(PrimitiveType.STRING);
 		for (int i = 1; i < node.nChildren(); i++) {
 			assert node.child(i).getType().getType() == PrimitiveType.INTEGER;
 		}
@@ -235,7 +316,7 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		assert node.nChildren() == 2;
 		ParseNode left  = node.child(0);
 		ParseNode right = node.child(1);
-		if (node.toString().contains("CAST")) {
+		if (node.getToken().isLextant(Punctuator.CAST)) {
 			IdentifierNode identifier = (IdentifierNode) node.child(0);
 			for (ParseNode nodes : node.pathToRoot()) {
 				for (ParseNode childnodes : nodes.getChildren()) {
@@ -250,17 +331,42 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		}
 		List<Type> childTypes = null;
 		if (left instanceof IndexNode) {
-			ParseNode child = node.child(0);
-			Type identype = null;
-			while (child instanceof IndexNode) {
-				child = child.child(0);
+			if (right instanceof IndexNode) {
+				ParseNode child = node.child(0);
+				Type identype = null;
+				while (child instanceof IndexNode) {
+					child = child.child(0);
+				}
+				left = child;
+				identype = left.getType();
+				while (!(identype instanceof PrimitiveType)) {
+					identype = identype.getType();
+				}
+				ParseNode rightchild = node.child(1);
+				Type identype2 = null;
+				while (rightchild instanceof IndexNode) {
+					rightchild = rightchild.child(0);
+				}
+				right = rightchild;
+				identype2 = right.getType();
+				while (!(identype2 instanceof PrimitiveType)) {
+					identype2 = identype2.getType();
+				}
+				childTypes = Arrays.asList(identype, identype2);
 			}
-			left = child;
-			identype = left.getType();
-			while (!(identype instanceof PrimitiveType)) {
-				identype = identype.getType();
+			else {
+				ParseNode child = node.child(0);
+				Type identype = null;
+				while (child instanceof IndexNode) {
+					child = child.child(0);
+				}
+				left = child;
+				identype = left.getType();
+				while (!(identype instanceof PrimitiveType)) {
+					identype = identype.getType();
+				}
+				childTypes = Arrays.asList(identype, right.getType().getType());
 			}
-			childTypes = Arrays.asList(identype, right.getType().getType());
 		}
 		else {
 			childTypes = Arrays.asList(left.getType().getType(), right.getType().getType());
@@ -335,7 +441,6 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		List<Integer> characters = new LinkedList<Integer>();
 		List<Integer> rational = new LinkedList<Integer>();
 		List<ParseNode> children = node.getChildren();
-		Type[] childTypes = new Type[children.size()+1]; // heres where we try to determine each type and then see if how it constructs the above subtype
 		int i = 0;
 		for (i = 0; i < children.size(); i++) {		// but this is also where we need to determine a function signature that encompasses all the types we want and see if possible promotions exist
 			if (children.get(i).getType().getType() == PrimitiveType.INTEGER) {
@@ -428,6 +533,23 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 		LextantToken token = (LextantToken) node.getToken();
 		return token.getLextant();
 	}
+	
+	public void visitLeave(LengthNode node) {
+		assert node.nChildren() == 1;
+		ParseNode stringnode = node.child(0);
+		
+		if ((stringnode instanceof StringConstantNode) || (stringnode instanceof IdentifierNode)) {
+			if (stringnode instanceof IdentifierNode) {
+				IdentifierNode iden = (IdentifierNode) stringnode;
+				assert iden.getType().match(PrimitiveType.STRING);
+			}
+		}
+		else {
+			logError("length expression for strings");
+		}
+		
+		node.setType(PrimitiveType.INTEGER);
+	}
 
 
 	///////////////////////////////////////////////////////////////////////////
@@ -493,10 +615,22 @@ class SemanticAnalysisVisitor extends ParseNodeVisitor.Default {
 			node.setBinding(binding);
 		}
 		// else parent DeclarationNode does the processing.
+		// such is for parameter specification and function node
 	}
 	private boolean isBeingDeclared(IdentifierNode node) {
 		ParseNode parent = node.getParent();
-		return (parent instanceof DeclarationNode) && (node == parent.child(0));
+		if ((parent instanceof DeclarationNode) && (node == parent.child(0))) {
+			return true;
+		}
+		else if ((parent instanceof FunctionNode) && (node == parent.child(0))) { 
+			return true;
+		}
+		else if ((parent instanceof ParameterSpecification) && (node == parent.child(1))) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 	private void addBinding(IdentifierNode identifierNode, Type type) {
 		Scope scope = identifierNode.getLocalScope();

@@ -8,6 +8,7 @@ public enum TypeLiteral implements Type {
 	CHAR(1),
 	BOOL(1),
 	RAT(1),
+	VOID(1),
 	ERROR(0),			// use as a value when a syntax error has occurred
 	NO_TYPE(0, "");		// use as a value when no type has been assigned.
 	
